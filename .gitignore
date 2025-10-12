@@ -137,3 +137,11 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+.cursor
+.idea
+.vscode
+.cursor
+.cursor/rules
+.cursor/rules/use-bun-instead-of-node-vite-npm-pnpm.mdc
+.cursor/rules/use-bun-instead-of-node-vite-npm-pnpm.mdc
