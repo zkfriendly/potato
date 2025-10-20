@@ -1,7 +1,9 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-contract Portfolio {
+import "../../../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+
+contract Portfolio is Ownable {
     struct Basket {
         address[] tokens;
         mapping(address => TokenInfo) tokenInfos;
@@ -12,19 +14,16 @@ contract Portfolio {
         uint amount;
     }
 
-    address public owner;
     uint private balance;
     Basket[] private baskets;
 
-    constructor(address _owner) {
-        owner = _owner;
-    }
+    constructor(address _owner) Ownable(_owner) {}
 
     function createBasket(
         address[] memory _tokens,
         uint[] memory _percentages,
         uint[] memory _amounts
-    ) public {
+    ) public onlyOwner {
         require(
             _tokens.length == _percentages.length &&
                 _tokens.length == _amounts.length,
@@ -50,7 +49,6 @@ contract Portfolio {
     }
 
     function getAllBaskets() internal view returns (Basket[] storage) {
-      return baskets;
+        return baskets;
     }
-
 }
