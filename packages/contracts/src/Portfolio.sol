@@ -48,7 +48,45 @@ contract Portfolio is Ownable {
         }
     }
 
-    function getAllBaskets() internal view returns (Basket[] storage) {
-        return baskets;
+    function getBasketsCount() public view returns (uint256) {
+        return baskets.length;
+    }
+    function getBasket(
+        uint _index
+    )
+        public
+        view
+        returns (
+            address[] memory tokens,
+            uint[] memory percentages,
+            uint[] memory amounts
+        )
+    {
+        require(_index < baskets.length, "Basket index out of bounds");
+
+        Basket storage basket = baskets[_index];
+        tokens = basket.tokens;
+        percentages = new uint[](tokens.length);
+        amounts = new uint[](tokens.length);
+
+        for (uint i = 0; i < tokens.length; i++) {
+            TokenInfo storage info = basket.tokenInfos[tokens[i]];
+            percentages[i] = info.percentage;
+            amounts[i] = info.amount;
+        }
+    }
+
+    function getBasketTokens(uint256 _basketIndex) 
+        public 
+        view 
+        returns (address[] memory) {
+        return baskets[_basketIndex].tokens;
+    }
+
+    function getTokenInfo(uint256 _basketIndex, address _token)
+        public
+        view
+        returns (TokenInfo memory) {
+        return baskets[_basketIndex].tokenInfos[_token];
     }
 }
