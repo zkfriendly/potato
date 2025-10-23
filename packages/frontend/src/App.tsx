@@ -1,23 +1,24 @@
 import "./App.css";
 import PotatoDancer from "./components/PotatoDancer";
+import InvestingBars from "./components/InvestingBars";
 
 function App() {
   return (
     <div className="landing">
       <div className="banner">
-        🥔 We're buttery-smooth global money for everyone
+        🥔 Set it, spud it: effortless crypto basket rebalancing
       </div>
 
       <header className="hero">
         <div className="hero-copy">
           <h1>
-            <span className="scribble">BUTTERY-SMOOTH</span>
+            <span className="scribble">SMART, SILLY,</span>
             <br />
-            <span className="blob">GLOBAL MONEY</span>
+            <span className="blob">POTATO FINANCE</span>
           </h1>
           <p className="tagline">
-            Potato finance automatically rebalances your crypto basket so you
-            don't have to. Friendly, funny, and a little bit wiggly.
+            Build a basket, choose your weights, and let Potato keep your ratios
+            on target—hourly checks, friendly nudges, zero stress.
           </p>
           <div className="cta-row">
             <a className="btn primary" href="#try">
@@ -27,11 +28,32 @@ function App() {
               Learn more
             </a>
           </div>
+          <ul className="chips">
+            <li>Auto‑rebalance</li>
+            <li>Non‑custodial</li>
+            <li>Gas‑friendly</li>
+          </ul>
         </div>
         <div className="hero-visual">
           <PotatoDancer />
+          <InvestingBars />
         </div>
       </header>
+
+      {/* wavy separator for a unique section break */}
+      <div className="wave" aria-hidden="true">
+        <svg
+          viewBox="0 0 1440 80"
+          width="100%"
+          height="80"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,48 C240,96 480,0 720,32 C960,64 1200,96 1440,48 L1440,80 L0,80 Z"
+            fill="#fff4fb"
+          />
+        </svg>
+      </div>
 
       <section className="features" id="learn">
         <div className="feature-card">

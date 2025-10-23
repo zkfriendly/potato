@@ -1,7 +1,9 @@
 /* Landing styles */
 
 .landing {
-  --pink: #ff88cc;
+  --pink: #ff88cc; /* legacy for accents */
+  --tan: #ffde91; /* potato skin */
+  --mint: #b7f7d8; /* fresh accent */
   --ink: #2d1733;
   --banana: #ffe074;
   --white: #ffffff;
@@ -22,37 +24,35 @@
 }
 
 .hero {
-  min-height: 80vh;
+  min-height: 86vh;
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
   align-items: center;
   gap: 24px;
-  background: var(--pink);
+  background: radial-gradient(
+      1400px 500px at 10% -10%,
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0) 60%
+    ),
+    radial-gradient(
+      900px 400px at 100% 90%,
+      rgba(255, 255, 255, 0.45),
+      rgba(255, 255, 255, 0) 60%
+    ),
+    linear-gradient(180deg, var(--tan), #ffc0e1 60%);
   position: relative;
   overflow: hidden;
-  padding: 48px 32px;
+  padding: 56px 40px 72px;
 }
 
+/* remove white pills, replace with subtle confetti dots */
 .hero:before,
 .hero:after {
-  content: "";
-  position: absolute;
-  background: #fff;
-  border-radius: 100px;
-  opacity: 0.9;
-  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.08));
+  display: none;
 }
-.hero:before {
-  width: 260px;
-  height: 80px;
-  left: 8%;
-  top: 20%;
-}
-.hero:after {
-  width: 340px;
-  height: 90px;
-  right: 8%;
-  top: 55%;
+
+.hero::marker {
+  content: none;
 }
 
 .hero-copy h1 {
@@ -72,7 +72,7 @@
   right: -10px;
   bottom: -6px;
   height: 14px;
-  background: rgba(255, 255, 255, 0.7);
+  background: linear-gradient(90deg, #fff0c9, #ffd3e9 60%, var(--mint));
   transform: rotate(-2deg);
   border-radius: 12px;
 }
@@ -112,6 +112,27 @@
 .hero-visual {
   display: grid;
   place-items: center;
+}
+
+.invest-bars {
+  margin-top: -20px;
+}
+
+.chips {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chips li {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px dashed var(--ink);
 }
 
 /* Potato animations */
@@ -186,8 +207,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  padding: 32px;
-  background: #fff4fb;
+  padding: 40px;
+  background: linear-gradient(180deg, #fff9f2, #f9fff8 40%, #ffffff 100%);
 }
 .feature-card {
   background: #ffffff;
@@ -200,5 +221,10 @@
 .footer {
   text-align: center;
   padding: 20px;
-  background: #fff4fb;
+  background: #fff9f2;
+}
+
+.wave {
+  line-height: 0;
+  background: transparent;
 }
