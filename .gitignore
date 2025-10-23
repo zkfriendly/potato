@@ -1,6 +1,10 @@
 # OS-specific files
 .DS_Store
 
+.env
+.env.*
+!.env.example
+
 # Logs
 logs
 *.log

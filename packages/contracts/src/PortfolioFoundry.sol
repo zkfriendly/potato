@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import { Portfolio } from "./Portfolio.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 
 contract PortfolioFoundry is Ownable {
