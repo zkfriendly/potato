@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "../../../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Portfolio is Ownable {
     struct Basket {
@@ -18,6 +18,8 @@ contract Portfolio is Ownable {
     Basket[] private baskets;
 
     constructor(address _owner) Ownable(_owner) {}
+
+    event BasketCreated(uint indexed basketIndex);
 
     function createBasket(
         address[] memory _tokens,
@@ -46,17 +48,15 @@ contract Portfolio is Ownable {
                 amount: _amounts[i]
             });
         }
+
+        emit BasketCreated(baskets.length - 1);
     }
 
     function getBasketsCount() public view returns (uint256) {
         return baskets.length;
     }
-    function getBasket(
-        uint _index
-    )
-        public
-        view
-        returns (
+
+    function getBasket(uint _index) public view returns (
             address[] memory tokens,
             uint[] memory percentages,
             uint[] memory amounts
@@ -76,17 +76,14 @@ contract Portfolio is Ownable {
         }
     }
 
-    function getBasketTokens(uint256 _basketIndex) 
-        public 
-        view 
-        returns (address[] memory) {
+    function getBasketTokens(uint256 _basketIndex) public view returns (address[] memory) {
         return baskets[_basketIndex].tokens;
     }
 
-    function getTokenInfo(uint256 _basketIndex, address _token)
-        public
-        view
-        returns (TokenInfo memory) {
+    function getTokenInfo(
+        uint256 _basketIndex,
+        address _token
+    ) public view returns (TokenInfo memory) {
         return baskets[_basketIndex].tokenInfos[_token];
     }
 }
