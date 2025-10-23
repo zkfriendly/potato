@@ -18,6 +18,12 @@ export default function InvestingBars({
     { x: 220, color: "#8ec5ff" },
   ];
 
+  // Compute a horizontal translation so bars are perfectly centered
+  const contentLeft = bars[0].x;
+  const contentRight = bars[bars.length - 1].x + 28; // last bar width
+  const contentMid = (contentLeft + contentRight) / 2;
+  const dx = width / 2 - contentMid;
+
   return (
     <svg
       className="invest-bars"
@@ -26,56 +32,58 @@ export default function InvestingBars({
       viewBox={`0 0 ${width} ${height}`}
       aria-hidden="true"
     >
-      {bars.map((b, i) => (
-        <g key={i} transform={`translate(${b.x}, 0)`}>
-          <rect
-            x={0}
-            y={20}
-            width={28}
-            height={height - 40}
-            rx={8}
-            fill="#ffffff55"
+      <g transform={`translate(${dx}, 0)`}>
+        {bars.map((b, i) => (
+          <g key={i} transform={`translate(${b.x}, 0)`}>
+            <rect
+              x={0}
+              y={20}
+              width={28}
+              height={height - 40}
+              rx={8}
+              fill="#ffffff55"
+              stroke="#2d1733"
+              strokeWidth={2}
+            />
+            <rect
+              x={0}
+              y={height - 40}
+              width={28}
+              height={0}
+              rx={8}
+              fill={b.color}
+            >
+              <animate
+                attributeName="y"
+                values={`${height - 40}; ${40 + i * 14}; ${height - 40}`}
+                dur={`${4 + i * 0.4}s`}
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="height"
+                values={`0; ${height - 80 - i * 14}; 0`}
+                dur={`${4 + i * 0.4}s`}
+                repeatCount="indefinite"
+              />
+            </rect>
+          </g>
+        ))}
+        {/* rebalance indicator */}
+        <g>
+          <path
+            d={`M${bars[0].x} 18 H ${bars[bars.length - 1].x + 28}`}
             stroke="#2d1733"
-            strokeWidth={2}
+            strokeWidth={3}
+            strokeLinecap="round"
           />
-          <rect
-            x={0}
-            y={height - 40}
-            width={28}
-            height={0}
-            rx={8}
-            fill={b.color}
-          >
-            <animate
-              attributeName="y"
-              values={`${height - 40}; ${40 + i * 14}; ${height - 40}`}
-              dur={`${4 + i * 0.4}s`}
+          <circle r={5} fill="#2d1733">
+            <animateMotion
+              dur="6s"
               repeatCount="indefinite"
+              path={`M${bars[0].x} 18 H ${bars[bars.length - 1].x + 28}`}
             />
-            <animate
-              attributeName="height"
-              values={`0; ${height - 80 - i * 14}; 0`}
-              dur={`${4 + i * 0.4}s`}
-              repeatCount="indefinite"
-            />
-          </rect>
+          </circle>
         </g>
-      ))}
-      {/* rebalance indicator */}
-      <g>
-        <path
-          d={`M${bars[0].x} 18 H ${bars[bars.length - 1].x + 28}`}
-          stroke="#2d1733"
-          strokeWidth={3}
-          strokeLinecap="round"
-        />
-        <circle r={5} fill="#2d1733">
-          <animateMotion
-            dur="6s"
-            repeatCount="indefinite"
-            path={`M${bars[0].x} 18 H ${bars[bars.length - 1].x + 28}`}
-          />
-        </circle>
       </g>
     </svg>
   );
