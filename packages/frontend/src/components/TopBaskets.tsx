@@ -75,7 +75,7 @@ function RatioBar({ ratios }: { ratios: Basket["ratios"] }) {
 
 export default function TopBaskets() {
   return (
-    <section className="top-baskets">
+    <section className="top-baskets" id="top-baskets">
       <h2>Top performing baskets</h2>
       <div className="baskets-grid">
         {baskets.map((b) => (

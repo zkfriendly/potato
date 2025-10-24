@@ -40,7 +40,23 @@ function App() {
           <InvestingBars />
         </div>
       </header>
-
+      <div className="scroll-bar">
+        <a
+          className="scroll-prompt"
+          href="#top-baskets"
+          aria-label="Scroll to top baskets"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+            <path
+              d="M6 9l6 6 6-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+        </a>
+      </div>
       {/* wavy separator for a unique section break */}
       <div className="wave" aria-hidden="true">
         <svg

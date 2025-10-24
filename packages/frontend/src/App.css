@@ -108,6 +108,17 @@
   background: transparent;
   color: var(--ink);
 }
+.btn.circle {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 999px;
+}
+.scroll-cta {
+  animation: bobDown 1.8s infinite ease-in-out;
+}
 
 .hero-visual {
   display: grid;
@@ -227,6 +238,38 @@
 .wave {
   line-height: 0;
   background: transparent;
+}
+
+/* white bottom bar with centered scroll prompt */
+.scroll-bar {
+  display: grid;
+  place-items: center;
+  height: 64px;
+  background: #fff;
+}
+
+/* bottom-centered scroll prompt */
+.scroll-prompt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: #fffdfb;
+  color: var(--ink);
+  text-decoration: none;
+  animation: bobDown 1.8s infinite ease-in-out;
+}
+@keyframes bobDown {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
 }
 
 /* Top baskets */
