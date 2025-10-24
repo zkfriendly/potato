@@ -228,3 +228,69 @@
   line-height: 0;
   background: transparent;
 }
+
+/* Top baskets */
+.top-baskets {
+  padding: 28px 40px 8px;
+  background: #ffffff;
+}
+.top-baskets h2 {
+  margin: 0 0 14px;
+}
+.baskets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.basket-card {
+  background: #fffdfb;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 0 rgba(45, 23, 51, 0.18);
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.chip-positive {
+  font-weight: 800;
+  background: #d9ffe9;
+  border: 1.5px solid #2d1733;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+.ratio-bar {
+  margin: 10px 0;
+}
+.ratio-list {
+  display: flex;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 12px;
+  flex-wrap: wrap;
+}
+.ratio-list .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  border: 1.5px solid var(--ink);
+}
+.dot-eth {
+  background: #8ec5ff;
+}
+.dot-btc {
+  background: #f4b154;
+}
+.dot-pyusd {
+  background: #61d3a5;
+}
+.card-actions {
+  display: flex;
+  gap: 10px;
+}

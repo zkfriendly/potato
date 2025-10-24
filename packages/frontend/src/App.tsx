@@ -1,6 +1,7 @@
 import "./App.css";
 import PotatoDancer from "./components/PotatoDancer";
 import InvestingBars from "./components/InvestingBars";
+import TopBaskets from "./components/TopBaskets";
 
 function App() {
   return (
@@ -54,6 +55,8 @@ function App() {
           />
         </svg>
       </div>
+
+      <TopBaskets />
 
       <section className="features" id="learn">
         <div className="feature-card">
