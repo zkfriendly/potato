@@ -39,6 +39,13 @@ const config: HardhatUserConfig = {
       url: configVariable("SEPOLIA_RPC_URL"),
       accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
+    hedera: {
+      type: "http",
+      url: configVariable("HEDERA_RPC_URL"),
+      accounts: [
+        configVariable("HEDERA_PRIVATE_KEY"),
+      ]
+    },
   },
 };
 

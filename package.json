@@ -7,7 +7,8 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "vite": "^7.1.11"
   },
   "peerDependencies": {
     "typescript": "^5"
