@@ -303,6 +303,17 @@
   align-items: center;
   gap: 8px;
 }
+.metrics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.chips-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .card-head h3 {
   display: flex;
   align-items: center;
@@ -325,8 +336,18 @@
 .chip-positive .value {
   font-size: 18px;
 }
+.return-strong {
+  font-weight: 900;
+  font-size: 22px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  color: var(--ink);
+  background: #fff0c9;
+  border: 2px solid var(--ink);
+  box-shadow: 0 4px 0 rgba(45, 23, 51, 0.18);
+}
 .ratio-bar {
-  margin: 10px 0;
+  margin: 12px 0;
 }
 .ratio-list {
   display: flex;
@@ -336,22 +357,11 @@
   margin: 8px 0 12px;
   flex-wrap: wrap;
 }
-.ratio-list .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
+.asset-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
   margin-right: 6px;
-  border: 1.5px solid var(--ink);
-}
-.dot-eth {
-  background: #8ec5ff;
-}
-.dot-btc {
-  background: #f4b154;
-}
-.dot-pyusd {
-  background: #61d3a5;
 }
 .card-actions {
   display: flex;
