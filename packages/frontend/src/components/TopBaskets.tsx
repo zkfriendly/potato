@@ -4,9 +4,20 @@ type Basket = {
   name: string;
   ratios: { asset: string; pct: number }[];
   improvement: number; // % better than HODL
+  featured?: boolean;
 };
 
 const baskets: Basket[] = [
+  {
+    name: "Cushioned Core",
+    ratios: [
+      { asset: "BTC", pct: 40 },
+      { asset: "ETH", pct: 40 },
+      { asset: "PYUSD", pct: 20 },
+    ],
+    improvement: 4.65,
+    featured: true,
+  },
   {
     name: "Balanced Blue",
     ratios: [
@@ -14,15 +25,6 @@ const baskets: Basket[] = [
       { asset: "BTC", pct: 50 },
     ],
     improvement: 3.5,
-  },
-  {
-    name: "Cushioned Core",
-    ratios: [
-      { asset: "ETH", pct: 30 },
-      { asset: "BTC", pct: 30 },
-      { asset: "PYUSD", pct: 20 },
-    ],
-    improvement: 4,
   },
 ];
 
@@ -77,10 +79,21 @@ export default function TopBaskets() {
       <h2>Top performing baskets</h2>
       <div className="baskets-grid">
         {baskets.map((b) => (
-          <article key={b.name} className="basket-card">
+          <article
+            key={b.name}
+            className={`basket-card${b.featured ? " featured" : ""}`}
+          >
             <div className="card-head">
-              <h3>{b.name}</h3>
-              <span className="chip-positive">+{b.improvement}% vs HODL</span>
+              <h3>
+                {b.featured && (
+                  <span className="badge-featured">👑 Top pick</span>
+                )}
+                {b.name}
+              </h3>
+              <span className="chip-positive">
+                <span className="value">+{b.improvement.toFixed(2)}%</span> vs
+                HODL
+              </span>
             </div>
             <RatioBar ratios={b.ratios} />
             <ul className="ratio-list">

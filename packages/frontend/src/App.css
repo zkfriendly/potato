@@ -243,11 +243,16 @@
   gap: 16px;
 }
 .basket-card {
-  background: #fffdfb;
+  background: linear-gradient(180deg, #fffdfb, #fff6ed);
   border: 2px solid var(--ink);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 6px 0 rgba(45, 23, 51, 0.18);
+  box-shadow: 0 8px 0 rgba(45, 23, 51, 0.18);
+  position: relative;
+}
+.basket-card.featured {
+  outline: 3px solid var(--banana);
+  box-shadow: 0 10px 0 rgba(45, 23, 51, 0.22);
 }
 .card-head {
   display: flex;
@@ -255,12 +260,27 @@
   align-items: center;
   gap: 8px;
 }
+.card-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge-featured {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--banana);
+  border: 1.5px solid var(--ink);
+}
 .chip-positive {
   font-weight: 800;
   background: #d9ffe9;
   border: 1.5px solid #2d1733;
   padding: 6px 10px;
   border-radius: 999px;
+}
+.chip-positive .value {
+  font-size: 18px;
 }
 .ratio-bar {
   margin: 10px 0;
