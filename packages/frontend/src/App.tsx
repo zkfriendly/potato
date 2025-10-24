@@ -1,9 +1,13 @@
 import "./App.css";
+import { useState } from "react";
 import PotatoDancer from "./components/PotatoDancer";
 import InvestingBars from "./components/InvestingBars";
 import TopBaskets from "./components/TopBaskets";
+import CreateProfile from "./CreateProfile";
 
 function App() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="landing">
       <div className="banner">
@@ -22,9 +26,12 @@ function App() {
             on target—hourly checks, friendly nudges, zero stress.
           </p>
           <div className="cta-row">
-            <a className="btn primary" href="#try">
+            <button
+              className="btn primary"
+              onClick={() => setIsModalOpen(true)}
+            >
               Try now
-            </a>
+            </button>
             <a className="btn ghost" href="#learn">
               Learn more
             </a>
@@ -40,6 +47,7 @@ function App() {
           <InvestingBars />
         </div>
       </header>
+
       <div className="scroll-bar">
         <a
           className="scroll-prompt"
@@ -57,7 +65,8 @@ function App() {
           </svg>
         </a>
       </div>
-      {/* wavy separator for a unique section break */}
+
+      {/* wavy separator */}
       <div className="wave" aria-hidden="true">
         <svg
           viewBox="0 0 1440 80"
@@ -92,6 +101,21 @@ function App() {
       <footer className="footer">
         <span>© {new Date().getFullYear()} Potato finance</span>
       </footer>
+
+      {/* Create Profile Modal */}
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="modal-close"
+              onClick={() => setIsModalOpen(false)}
+            >
+              ×
+            </button>
+            <CreateProfile />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

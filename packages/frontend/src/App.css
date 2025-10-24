@@ -367,3 +367,68 @@
   display: flex;
   gap: 10px;
 }
+
+/* Create profile page */
+.create-profile {
+  padding: 28px 40px 40px;
+  background: #fffefb;
+}
+.create-profile h2 {
+  margin: 0 0 8px;
+}
+.profile-card {
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 0 rgba(45, 23, 51, 0.18);
+  max-width: 560px;
+}
+.profile-card label {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.profile-card input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  font-size: 16px;
+}
+.ens-preview {
+  margin: 10px 0 12px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(45, 23, 51, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 0 rgba(45, 23, 51, 0.22);
+  max-width: 480px;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--ink);
+}
