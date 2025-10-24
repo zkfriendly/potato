@@ -9,34 +9,31 @@ export default function CreateProfile() {
 
   return (
     <section className="create-profile">
-      <h2>Create your profile</h2>
+      <h2>Let's get you set up! 🥔</h2>
       <p className="hint">
-        Pick a friendly nickname. We'll mint it as an ENS subname under
-        pyusd.eth.
+        Choose a nickname for your Potato profile. It'll become your personal
+        endpoint to easily invest by sending PYUSD to it.
       </p>
-      <div className="profile-card">
-        <label>
-          Nickname
-          <input
-            type="text"
-            placeholder="e.g. zkfriendly"
-            value={nick}
-            onChange={(e) =>
-              setNick(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ""))
-            }
-          />
-        </label>
-        <div className="ens-preview">
-          Your ENS: <strong>{ens || "<nickname>.pyusd.eth"}</strong>
-        </div>
-        <div className="card-actions">
-          <a className="btn primary" href="#create">
-            Continue
-          </a>
-          <a className="btn ghost" href="#">
-            Cancel
-          </a>
-        </div>
+      <label>
+        <input
+          type="text"
+          placeholder="e.g. zkfriendly"
+          value={nick}
+          onChange={(e) =>
+            setNick(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ""))
+          }
+        />
+      </label>
+      <div className="ens-preview">
+        Your endpoint: <strong>{ens || "<nickname>.pyusd.eth"}</strong>
+      </div>
+      <div className="card-actions">
+        <a className="btn primary" href="#create">
+          Continue
+        </a>
+        <a className="btn ghost" href="#">
+          Cancel
+        </a>
       </div>
     </section>
   );

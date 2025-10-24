@@ -370,34 +370,26 @@
 
 /* Create profile page */
 .create-profile {
-  padding: 28px 40px 40px;
+  padding: 32px 40px 40px;
   background: #fffefb;
 }
 .create-profile h2 {
   margin: 0 0 8px;
 }
-.profile-card {
-  background: #ffffff;
-  border: 2px solid var(--ink);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 6px 0 rgba(45, 23, 51, 0.18);
-  max-width: 560px;
-}
-.profile-card label {
+.create-profile label {
   display: block;
   font-weight: 800;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
-.profile-card input[type="text"] {
+.create-profile input[type="text"] {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border: 2px solid var(--ink);
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 18px;
 }
 .ens-preview {
-  margin: 10px 0 12px;
+  margin: 12px 0 16px;
 }
 
 .modal-overlay {
