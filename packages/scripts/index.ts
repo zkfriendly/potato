@@ -632,20 +632,39 @@ async function main() {
         "Ethereum_10_20_2024-10_20_2025_historical_data_coinmarketcap.csv"
       ),
     ],
+    // USDC handled as synthetic $1 price in the code
   ]);
 
-  // 40% BTC / 40% ETH / 20% USDC Portfolio (USDC assumed $1)
-  const config: BacktestConfig = {
-    startDate: "2024-10-20",
-    endDate: "2025-10-19",
-    tokens: ["bitcoin", "ethereum", "usdc"],
-    weights: [0.4, 0.4, 0.2],
-    rebalanceThreshold: 0.05, // Rebalance when drift exceeds 5%
-    initialInvestment: 10000, // $10,000 starting capital
-  };
+  // Define both basket configurations
+  const configs: Array<{ config: BacktestConfig; label: string }> = [
+    {
+      label: "50% BTC / 50% ETH",
+      config: {
+        startDate: "2024-10-20",
+        endDate: "2025-10-19",
+        tokens: ["bitcoin", "ethereum"],
+        weights: [0.5, 0.5],
+        rebalanceThreshold: 0.05,
+        initialInvestment: 10000,
+      },
+    },
+    {
+      label: "40% BTC / 40% ETH / 20% USDC",
+      config: {
+        startDate: "2024-10-20",
+        endDate: "2025-10-19",
+        tokens: ["bitcoin", "ethereum", "usdc"],
+        weights: [0.4, 0.4, 0.2],
+        rebalanceThreshold: 0.05,
+        initialInvestment: 10000,
+      },
+    },
+  ];
 
-  console.log("🔍 Running 40/40/20 BTC/ETH/USDC backtest with local data...\n");
-  await runBacktest(config, csvFiles);
+  for (const { config, label } of configs) {
+    console.log(`\n🔍 Running ${label} backtest with local data...\n`);
+    await runBacktest(config, csvFiles);
+  }
 }
 
 main().catch(console.error);
