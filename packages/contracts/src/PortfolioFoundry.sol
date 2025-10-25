@@ -1,25 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { Portfolio } from "./Portfolio.sol";
+import {Portfolio} from "./Portfolio.sol";
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+/**
+ * @title PortfolioFoundry
+ * @notice Allows anyone to create a portfolio for a given owner
+ */
+contract PortfolioFoundry {
+    mapping(address owner => address portfolio) public userPortfolio;
 
+    error PortfolioAlreadyExists();
 
-contract PortfolioFoundry is Ownable {
-    mapping(address => address) public userPortfolios;
+    event PortfolioCreated(address indexed owner, address indexed portfolio);
 
-    constructor(address _owner) Ownable(_owner) {}
+    /**
+     * @dev Reverts if a portfolio already exists for the given owner
+     */
+    function createPortfolio(address _owner) external returns (address) {
+        if (userPortfolio[_owner] != address(0)) {
+            revert PortfolioAlreadyExists();
+        }
 
-    event PortfolioCreated(address indexed portfolioOwner, address indexed portfolio);
+        address portfolio = address(new Portfolio(_owner));
+        userPortfolio[_owner] = portfolio;
+        emit PortfolioCreated(_owner, portfolio);
 
-    function createPortfolio(address _portfolioOwner) external onlyOwner returns (address) {
-        require(userPortfolios[_portfolioOwner] == address(0), "User already has a portfolio");
-
-        Portfolio portfolio = new Portfolio(_portfolioOwner);
-        userPortfolios[_portfolioOwner] = address(portfolio);
-        emit PortfolioCreated(_portfolioOwner, address(portfolio));
-
-        return address(portfolio);
+        return portfolio;
     }
 }
