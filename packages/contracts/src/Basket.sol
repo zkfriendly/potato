@@ -24,12 +24,10 @@ contract Basket is Ownable, IBasket {
     constructor(
         address _owner,
         address[] memory _tokens,
-        uint256[] memory _percentages,
-        uint256[] memory _amounts
+        uint256[] memory _percentages
     ) Ownable(_owner) {
         if (
-            _tokens.length != _percentages.length ||
-            _tokens.length != _amounts.length
+            _tokens.length != _percentages.length 
         ) {
             revert ArraysLengthMismatch();
         }
@@ -39,7 +37,7 @@ contract Basket is Ownable, IBasket {
             totalPercentage += _percentages[i];
             tokenInfo[_tokens[i]] = TokenInfo({
                 percentage: _percentages[i],
-                amount: _amounts[i]
+                amount: 0
             });
         }
 
