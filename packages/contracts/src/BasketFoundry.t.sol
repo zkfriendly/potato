@@ -13,11 +13,11 @@ contract BasketFoundryTest is Test {
     }
 
     function test_createBasket() public {
-        address owner = address(0x1);
+        address owner = makeAddr("owner");
 
         address[] memory tokens = new address[](2);
-        tokens[0] = address(0x1);
-        tokens[1] = address(0x2);
+        tokens[0] = makeAddr("BTC");
+        tokens[1] = makeAddr("ETH");
 
         uint256[] memory percentages = new uint256[](2);
         percentages[0] = 50;
@@ -36,8 +36,8 @@ contract BasketFoundryTest is Test {
             _basket
         ).getTokensInfo();
 
-        assertEq(_tokens[0], address(0x1));
-        assertEq(_tokens[1], address(0x2));
+        assertEq(_tokens[0], makeAddr("BTC"));
+        assertEq(_tokens[1], makeAddr("ETH"));
         assertEq(_percentages[0], 50);
         assertEq(_percentages[1], 50);
     }
