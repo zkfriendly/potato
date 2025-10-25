@@ -5,6 +5,7 @@ import InvestingBars from "./components/InvestingBars";
 import TopBaskets from "./components/TopBaskets";
 import CreateProfile from "./CreateProfile";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { sendExampleGaslessTx } from "./pimlico";
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,6 +24,18 @@ function App() {
         <div>
           <p>Connected to {account.address}</p>
           <button onClick={() => disconnect()}>Disconnect</button>
+          <button
+            onClick={async () => {
+              try {
+                const hash = await sendExampleGaslessTx();
+                alert(`UserOp sent: ${hash}`);
+              } catch (e) {
+                alert(String(e));
+              }
+            }}
+          >
+            Send gasless tx
+          </button>
         </div>
       )}
       <div className="banner">
@@ -127,7 +140,7 @@ function App() {
             >
               ×
             </button>
-            <CreateProfile />
+            <CreateProfile onComplete={() => setIsModalOpen(false)} />
           </div>
         </div>
       )}

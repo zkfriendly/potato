@@ -1,7 +1,13 @@
 import React, { useMemo, useState } from "react";
+import { sendExampleGaslessTx } from "./pimlico";
 
-export default function CreateProfile() {
+type CreateProfileProps = {
+  onComplete?: (hash: string) => void;
+};
+
+export default function CreateProfile({ onComplete }: CreateProfileProps) {
   const [nick, setNick] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const ens = useMemo(
     () => (nick ? `${nick.toLowerCase()}.pyusd.eth` : ""),
     [nick]
@@ -28,12 +34,26 @@ export default function CreateProfile() {
         Your endpoint: <strong>{ens || "<nickname>.pyusd.eth"}</strong>
       </div>
       <div className="card-actions">
-        <a className="btn primary" href="#create">
-          Continue
-        </a>
-        <a className="btn ghost" href="#">
+        <button
+          className="btn primary"
+          disabled={isSubmitting}
+          onClick={async () => {
+            try {
+              setIsSubmitting(true);
+              const hash = await sendExampleGaslessTx();
+              onComplete ? onComplete(hash) : alert(`UserOp included: ${hash}`);
+            } catch (e) {
+              alert(String(e));
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+        >
+          {isSubmitting ? "Sending..." : "Continue"}
+        </button>
+        <button className="btn ghost" onClick={(e) => e.preventDefault()}>
           Cancel
-        </a>
+        </button>
       </div>
     </section>
   );

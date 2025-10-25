@@ -33,6 +33,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@tanstack/react-query": "^5.90.5",
+        "permissionless": "^0.2.12",
         "react": "^19.1.1",
         "react-dom": "^19.1.1",
         "viem": "2.x",
@@ -968,6 +969,8 @@
     "path-exists": ["path-exists@4.0.0", "", {}, "sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w=="],
 
     "path-key": ["path-key@3.1.1", "", {}, "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q=="],
+
+    "permissionless": ["permissionless@0.2.57", "", { "peerDependencies": { "ox": "^0.8.0", "viem": "^2.28.1" }, "optionalPeers": ["ox"] }, "sha512-QrzAoQGYPV/NJ2x5Sj18h7qed6f+kCyQAojrncN091UPiGqHjFNjgdsgreiv8pxlQgF4UcpuJUvsHLpOEBd6cQ=="],
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
