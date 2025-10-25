@@ -211,14 +211,6 @@ export default function TopBaskets() {
                 </li>
               ))}
             </ul>
-            <div className="card-actions">
-              <a className="btn primary" href="#try">
-                Try basket
-              </a>
-              <a className="btn ghost" href="#learn">
-                Details
-              </a>
-            </div>
           </article>
         ))}
       </div>

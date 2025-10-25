@@ -32,11 +32,8 @@ function App() {
               className="btn primary"
               onClick={() => setIsModalOpen(true)}
             >
-              Try now
+              Setup
             </button>
-            <a className="btn ghost" href="#learn">
-              Learn more
-            </a>
           </div>
           <ul className="chips">
             <li>Auto‑rebalance</li>
