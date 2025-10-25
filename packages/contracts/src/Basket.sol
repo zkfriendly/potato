@@ -21,6 +21,7 @@ contract Basket is Ownable {
     error PercentagesMustSumToExactly100();
     error PriceFeedIdNotFound();
     error PriceNotFound();
+    error TotalValueIsZero();
 
     constructor(
         address _owner,
@@ -80,5 +81,19 @@ contract Basket is Ownable {
             revert PriceNotFound();
         }
         return price.price;
+    }
+
+    function getBasketValue(bytes[][] calldata priceUpdates) public returns (int64 totalValue) {
+        if (priceUpdates.length != tokens.length) {
+            revert ArraysLengthMismatch();
+        }
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            totalValue += getTokenPrice(tokens[i], priceUpdates[i]);
+        }
+    }
+
+    function rebalanceBasket(bytes[][] calldata priceUpdates) public payable {
+        // TODO: Implement rebalancing logic
     }
 }
