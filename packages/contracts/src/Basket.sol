@@ -2,17 +2,17 @@
 pragma solidity ^0.8.28;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
-import "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
+import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
+import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-address constant SEPOLIA_PYTH_ADDRESS = 0xDd24F84d36BF92C65F92307595335bdFab5Bbd21;
 
 /**
  * @title Basket
  * @notice A basket of tokens with a given percentage and amount
  */
 contract Basket is Ownable {
-    IPyth public pyth;
+    address public constant PYTH_ADDRESS = 0xDd24F84d36BF92C65F92307595335bdFab5Bbd21;
+    
     address[] public tokens;
     mapping(address token => uint256 percentage) public tokenPercentage;
     mapping(address token => bytes32 priceFeedId) public tokenPriceFeedId;
@@ -29,7 +29,6 @@ contract Basket is Ownable {
         uint256[] memory _percentages,
         bytes32[] memory _priceFeedIds
     ) Ownable(_owner) {
-        pyth = IPyth(SEPOLIA_PYTH_ADDRESS);
         if (_tokens.length != _percentages.length || _tokens.length != _priceFeedIds.length) {
             revert ArraysLengthMismatch();
         }
@@ -73,6 +72,7 @@ contract Basket is Ownable {
             revert PriceFeedIdNotFound();
         }
 
+        IPyth pyth = IPyth(PYTH_ADDRESS);
         uint256 fee = pyth.getUpdateFee(priceUpdate);
         pyth.updatePriceFeeds{ value: fee }(priceUpdate);
         PythStructs.Price memory price = pyth.getPriceNoOlderThan(priceFeedId, 60);

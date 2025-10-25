@@ -16,10 +16,12 @@
       "version": "1.0.0",
       "dependencies": {
         "@openzeppelin/contracts": "^5.4.0",
+        "@pythnetwork/pyth-sdk-solidity": "^4.2.0",
       },
       "devDependencies": {
         "@nomicfoundation/hardhat-ignition": "^3.0.3",
         "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+        "@nomicfoundation/hardhat-verify": "^3.0.4",
         "@types/node": "^22.18.10",
         "forge-std": "github:foundry-rs/forge-std#v1.9.4",
         "hardhat": "^3.0.7",
@@ -264,6 +266,8 @@
     "@nomicfoundation/solidity-analyzer-win32-x64-msvc": ["@nomicfoundation/solidity-analyzer-win32-x64-msvc@0.1.2", "", {}, "sha512-Fdjli4DCcFHb4Zgsz0uEJXZ2K7VEO+w5KVv7HmT7WO10iODdU9csC2az4jrhEsRtiR9Gfd74FlG0NYlw1BMdyA=="],
 
     "@openzeppelin/contracts": ["@openzeppelin/contracts@5.4.0", "", {}, "sha512-eCYgWnLg6WO+X52I16TZt8uEjbtdkgLC0SUX/xnAksjjrQI4Xfn4iBRoI5j55dmlOhDv1Y7BoR3cU7e3WWhC6A=="],
+
+    "@pythnetwork/pyth-sdk-solidity": ["@pythnetwork/pyth-sdk-solidity@4.2.0", "", {}, "sha512-IO4pRqloqEXdbWqFbiNqthpaA5Dktl+t5GXckwdReEti90H4zcgxvINFLrSfRp7ylN2cP/LVgoCRHGEJGYlwKg=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-beta.43", "", {}, "sha512-5Uxg7fQUCmfhax7FJke2+8B6cqgeUJUD9o2uXIKXhD+mG0mL6NObmVoi9wXEU1tY89mZKgAYA6fTbftx3q2ZPQ=="],
 
