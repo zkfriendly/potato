@@ -22,7 +22,7 @@ contract Basket is Ownable {
         if (_tokens.length != _percentages.length) {
             revert ArraysLengthMismatch();
         }
-
+        tokens = _tokens;
         uint256 totalPercentage = 0;
         for (uint256 i = 0; i < _tokens.length; i++) {
             totalPercentage += _percentages[i];
