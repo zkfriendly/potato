@@ -1,7 +1,7 @@
 import type { Hex } from "viem";
 import { createPublicClient, http } from "viem";
 import { sepolia } from "viem/chains";
-import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 import { createSmartAccountClient } from "permissionless";
 import { toSafeSmartAccount } from "permissionless/accounts";
 // Avoid subpath import issues: inline the known EntryPoint v0.7 address
@@ -10,36 +10,33 @@ const entryPoint07Address =
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { PIMLICO_API_KEY } from "./config";
 
-export async function getPimlicoClients() {
+export async function getPimlicoClients(forceNew = false) {
   if (!PIMLICO_API_KEY) throw new Error("Missing PIMLICO_API_KEY");
 
   const LS_KEY = "potato:pk";
   let pk: Hex | undefined;
   if (!pk) {
-    try {
-      const stored =
-        typeof window !== "undefined"
-          ? (localStorage.getItem(LS_KEY) as Hex | null)
-          : null;
-      if (stored && stored.startsWith("0x")) {
-        pk = stored as Hex;
-        console.info("[passkey] loaded existing private key from localStorage");
-      } else {
-        // Try passkey-backed key derivation first
-        pk = await generatePrivateKeyWithPasskey().catch(() => undefined);
-        if (!pk) {
-          const generated = generatePrivateKey();
-          pk = generated as Hex;
-          console.warn(
-            "[passkey] WebAuthn unavailable or failed, using random PK fallback"
-          );
-        }
-        if (typeof window !== "undefined") localStorage.setItem(LS_KEY, pk);
+    const stored =
+      typeof window !== "undefined"
+        ? (localStorage.getItem(LS_KEY) as Hex | null)
+        : null;
+    if (stored && stored.startsWith("0x") && !forceNew) {
+      pk = stored as Hex;
+      console.info("[passkey] loaded existing private key from localStorage");
+    } else {
+      // Try passkey-backed key derivation
+      // Any errors thrown here should bubble up
+      pk = await generatePrivateKeyWithPasskey(forceNew);
+      if (!pk) {
+        throw new Error("Passkey authentication was cancelled or failed");
       }
-    } catch {
-      // fallback if localStorage blocked
-      pk = generatePrivateKey() as Hex;
-      console.warn("[passkey] localStorage blocked, generated ephemeral PK");
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(LS_KEY, pk);
+        } catch (e) {
+          console.warn("[passkey] Could not save to localStorage", e);
+        }
+      }
     }
   }
 
@@ -88,28 +85,36 @@ export async function getPimlicoClients() {
 // 2) Else, create a new passkey (resident credential) and derive from its id.
 // NOTE: This is a demo approach. In production, use a server to manage
 // challenges and consider embedding signing into your AA flow directly.
-async function generatePrivateKeyWithPasskey(): Promise<Hex | undefined> {
+async function generatePrivateKeyWithPasskey(
+  forceNew = false
+): Promise<Hex | undefined> {
   try {
     if (!("PublicKeyCredential" in window)) return undefined;
 
     const CRED_KEY = "potato:cred";
     const storedCred = localStorage.getItem(CRED_KEY);
-    if (storedCred) {
+    if (storedCred && !forceNew) {
       console.info("[passkey] using stored credential id to derive PK");
       return derivePkFromCredentialId(base64UrlToBytes(storedCred));
     }
 
-    // Try to recover an existing resident credential (e.g., user cleared localStorage)
-    const recovered = await recoverCredentialIdWithPasskey();
-    if (recovered) {
-      const credIdB64 = bytesToBase64Url(recovered);
-      localStorage.setItem(CRED_KEY, credIdB64);
-      console.info("[passkey] recovered existing credential", {
-        id: credIdB64,
-      });
-      return derivePkFromCredentialId(recovered);
+    // If forceNew is false, ONLY try to recover existing passkey
+    if (!forceNew) {
+      // Try to recover an existing resident credential
+      const recovered = await recoverCredentialIdWithPasskey();
+      if (recovered) {
+        const credIdB64 = bytesToBase64Url(recovered);
+        localStorage.setItem(CRED_KEY, credIdB64);
+        console.info("[passkey] recovered existing credential", {
+          id: credIdB64,
+        });
+        return derivePkFromCredentialId(recovered);
+      }
+      // If recovery didn't find anything, throw error
+      throw new Error("No existing passkey found");
     }
 
+    // forceNew is true: Create new passkey
     const rpId = location.hostname;
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     const userId = crypto.getRandomValues(new Uint8Array(32));
@@ -129,7 +134,9 @@ async function generatePrivateKeyWithPasskey(): Promise<Hex | undefined> {
     const cred = (await navigator.credentials.create({
       publicKey,
     })) as PublicKeyCredential | null;
-    if (!cred) return undefined;
+    if (!cred) {
+      throw new Error("Passkey creation was cancelled");
+    }
 
     const rawId = new Uint8Array(cred.rawId);
     const credIdB64 = bytesToBase64Url(rawId);
@@ -138,7 +145,18 @@ async function generatePrivateKeyWithPasskey(): Promise<Hex | undefined> {
     return derivePkFromCredentialId(rawId);
   } catch (err) {
     console.error("[passkey] generation error", err);
-    return undefined;
+    // Re-throw to let caller handle
+    throw err;
+  }
+}
+
+// Check if passkeys are available on this device
+export async function checkPasskeyAvailability(): Promise<boolean> {
+  try {
+    if (!("PublicKeyCredential" in window)) return false;
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch {
+    return false;
   }
 }
 
@@ -158,24 +176,21 @@ function base64UrlToBytes(b64url: string): Uint8Array {
 async function recoverCredentialIdWithPasskey(): Promise<
   Uint8Array | undefined
 > {
-  try {
-    if (!("PublicKeyCredential" in window)) return undefined;
-    const challenge = crypto.getRandomValues(new Uint8Array(32));
-    const publicKey: PublicKeyCredentialRequestOptions = {
-      challenge,
-      userVerification: "preferred",
-    };
-    const cred = (await navigator.credentials.get({
-      publicKey,
-      // Allow conditional/optional mediation where supported
-      ...({ mediation: "optional" } as any),
-    })) as PublicKeyCredential | null;
-    if (!cred) return undefined;
-    return new Uint8Array(cred.rawId);
-  } catch (err) {
-    console.warn("[passkey] credential recovery failed", err);
-    return undefined;
+  if (!("PublicKeyCredential" in window)) return undefined;
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const publicKey: PublicKeyCredentialRequestOptions = {
+    challenge,
+    userVerification: "preferred",
+  };
+  const cred = (await navigator.credentials.get({
+    publicKey,
+    // Allow conditional/optional mediation where supported
+    mediation: "optional" as CredentialMediationRequirement,
+  })) as PublicKeyCredential | null;
+  if (!cred) {
+    throw new Error("Passkey selection was cancelled");
   }
+  return new Uint8Array(cred.rawId);
 }
 
 async function derivePkFromCredentialId(rawId: Uint8Array): Promise<Hex> {

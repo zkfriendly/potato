@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { sendExampleGaslessTx } from "./pimlico";
 
 type CreateProfileProps = {
@@ -15,7 +15,7 @@ export default function CreateProfile({ onComplete }: CreateProfileProps) {
 
   return (
     <section className="create-profile">
-      <h2>Let's get you set up! 🥔</h2>
+      <h2>Wallet authenticated! 🥔</h2>
       <p className="hint">
         Choose a nickname for your Potato profile. It'll become your personal
         endpoint to easily invest by sending PYUSD to it.

@@ -4,10 +4,52 @@ import PotatoDancer from "./components/PotatoDancer";
 import InvestingBars from "./components/InvestingBars";
 import TopBaskets from "./components/TopBaskets";
 import CreateProfile from "./CreateProfile";
-// Pimlico helpers are used in the profile flow; no direct import here
+import { getPimlicoClients, checkPasskeyAvailability } from "./pimlico";
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [walletReady, setWalletReady] = useState(false);
+  const [showPasskeyChoice, setShowPasskeyChoice] = useState(false);
+
+  const handleSetupClick = async () => {
+    const hasExistingKey = localStorage.getItem("potato:pk");
+    const hasPasskeys = await checkPasskeyAvailability();
+
+    // If no existing key and passkeys are available, show choice
+    if (!hasExistingKey && hasPasskeys) {
+      setShowPasskeyChoice(true);
+    } else {
+      // Direct authenticate with existing or create new
+      await authenticateWithPasskey(false);
+    }
+  };
+
+  const authenticateWithPasskey = async (forceNew: boolean) => {
+    setIsAuthenticating(true);
+    setShowPasskeyChoice(false);
+    try {
+      // Initialize passkey and wallet
+      await getPimlicoClients(forceNew);
+      setWalletReady(true);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.log("Passkey authentication cancelled or failed:", error);
+      // Only show alert for non-cancellation/timeout errors
+      const isCancellation =
+        error instanceof Error &&
+        (error.message.includes("cancelled") ||
+          error.message.includes("timed out") ||
+          error.message.includes("not allowed") ||
+          error.name === "NotAllowedError" ||
+          error.name === "AbortError");
+      if (!isCancellation && error instanceof Error) {
+        alert(error.message);
+      }
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   return (
     <div className="landing">
@@ -30,9 +72,10 @@ function App() {
           <div className="cta-row">
             <button
               className="btn primary"
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleSetupClick}
+              disabled={isAuthenticating}
             >
-              Setup
+              {isAuthenticating ? "Authenticating..." : "Setup"}
             </button>
           </div>
           <ul className="chips">
@@ -101,8 +144,50 @@ function App() {
         <span>© {new Date().getFullYear()} Potato finance</span>
       </footer>
 
+      {/* Passkey Choice Modal */}
+      {showPasskeyChoice && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowPasskeyChoice(false)}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="modal-close"
+              onClick={() => setShowPasskeyChoice(false)}
+            >
+              ×
+            </button>
+            <section className="create-profile">
+              <h2>Choose authentication method 🔐</h2>
+              <p className="hint">
+                Do you want to use an existing passkey or create a new one?
+              </p>
+              <div
+                className="card-actions"
+                style={{ flexDirection: "column", gap: "12px" }}
+              >
+                <button
+                  className="btn primary"
+                  onClick={() => authenticateWithPasskey(false)}
+                  disabled={isAuthenticating}
+                >
+                  Use existing passkey
+                </button>
+                <button
+                  className="btn ghost"
+                  onClick={() => authenticateWithPasskey(true)}
+                  disabled={isAuthenticating}
+                >
+                  Create new passkey
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      )}
+
       {/* Create Profile Modal */}
-      {isModalOpen && (
+      {isModalOpen && walletReady && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <button
@@ -111,7 +196,12 @@ function App() {
             >
               ×
             </button>
-            <CreateProfile onComplete={() => setIsModalOpen(false)} />
+            <CreateProfile
+              onComplete={() => {
+                setIsModalOpen(false);
+                setWalletReady(false);
+              }}
+            />
           </div>
         </div>
       )}
