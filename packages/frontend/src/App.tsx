@@ -4,40 +4,14 @@ import PotatoDancer from "./components/PotatoDancer";
 import InvestingBars from "./components/InvestingBars";
 import TopBaskets from "./components/TopBaskets";
 import CreateProfile from "./CreateProfile";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { sendExampleGaslessTx } from "./pimlico";
+// Pimlico helpers are used in the profile flow; no direct import here
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { connectors, connect } = useConnect();
-  const account = useAccount();
-  const { disconnect } = useDisconnect();
-
-  const connector = connectors.find(
-    (connector) => connector.id === "xyz.ithaca.porto"
-  )!;
 
   return (
     <div className="landing">
-      <button onClick={() => connect({ connector })}>Sign in</button>
-      {account.isConnected && (
-        <div>
-          <p>Connected to {account.address}</p>
-          <button onClick={() => disconnect()}>Disconnect</button>
-          <button
-            onClick={async () => {
-              try {
-                const hash = await sendExampleGaslessTx();
-                alert(`UserOp sent: ${hash}`);
-              } catch (e) {
-                alert(String(e));
-              }
-            }}
-          >
-            Send gasless tx
-          </button>
-        </div>
-      )}
+      {/* Passkey wallet embeds/initializes from the profile flow; no standalone sign-in here */}
       <div className="banner">
         🥔 Set it, spud it: effortless crypto basket rebalancing
       </div>

@@ -8,13 +8,13 @@ import { toSafeSmartAccount } from "permissionless/accounts";
 const entryPoint07Address =
   "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as const;
 import { createPimlicoClient } from "permissionless/clients/pimlico";
-import { PIMLICO_API_KEY, PRIVATE_KEY } from "./config";
+import { PIMLICO_API_KEY } from "./config";
 
 export async function getPimlicoClients() {
   if (!PIMLICO_API_KEY) throw new Error("Missing PIMLICO_API_KEY");
 
   const LS_KEY = "potato:pk";
-  let pk: Hex | undefined = PRIVATE_KEY as Hex | undefined;
+  let pk: Hex | undefined;
   if (!pk) {
     try {
       const stored =
@@ -23,15 +23,23 @@ export async function getPimlicoClients() {
           : null;
       if (stored && stored.startsWith("0x")) {
         pk = stored as Hex;
+        console.info("[passkey] loaded existing private key from localStorage");
       } else {
-        const generated = generatePrivateKey();
-        if (typeof window !== "undefined")
-          localStorage.setItem(LS_KEY, generated);
-        pk = generated as Hex;
+        // Try passkey-backed key derivation first
+        pk = await generatePrivateKeyWithPasskey().catch(() => undefined);
+        if (!pk) {
+          const generated = generatePrivateKey();
+          pk = generated as Hex;
+          console.warn(
+            "[passkey] WebAuthn unavailable or failed, using random PK fallback"
+          );
+        }
+        if (typeof window !== "undefined") localStorage.setItem(LS_KEY, pk);
       }
-    } catch (e) {
+    } catch {
       // fallback if localStorage blocked
       pk = generatePrivateKey() as Hex;
+      console.warn("[passkey] localStorage blocked, generated ephemeral PK");
     }
   }
 
@@ -73,6 +81,21 @@ export async function getPimlicoClients() {
   });
 
   return { publicClient, pimlicoClient, smartAccountClient, account };
+}
+
+// WebAuthn-based private key generation (mock):
+// For production, replace this with a real WebAuthn registration and
+// deterministic key derivation. Here we return undefined so the fallback
+// path uses a random PK, but we keep the function for future wiring.
+async function generatePrivateKeyWithPasskey(): Promise<Hex | undefined> {
+  try {
+    if (!("PublicKeyCredential" in window)) return undefined;
+    // TODO: Integrate real WebAuthn flow and derive a PK
+    console.info("[passkey] WebAuthn supported; integrate real flow here");
+    return undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function sendExampleGaslessTx() {

@@ -10,12 +10,5 @@ export const PRIVATE_KEY = import.meta.env.VITE_PRIVATE_KEY as
 export const CHAIN = "sepolia" as const;
 
 // Minimal wagmi config (no wallet connectors) to keep app booting
-import { createConfig, http } from "wagmi";
-import { sepolia } from "wagmi/chains";
-
-export const config = createConfig({
-  chains: [sepolia],
-  transports: {
-    [sepolia.id]: http(),
-  },
-});
+// If you later add passkey-capable connectors, wire them here.
+export const config = undefined as unknown as never;
