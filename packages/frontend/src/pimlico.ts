@@ -83,19 +83,121 @@ export async function getPimlicoClients() {
   return { publicClient, pimlicoClient, smartAccountClient, account };
 }
 
-// WebAuthn-based private key generation (mock):
-// For production, replace this with a real WebAuthn registration and
-// deterministic key derivation. Here we return undefined so the fallback
-// path uses a random PK, but we keep the function for future wiring.
+// WebAuthn-based private key derivation (client-only, no server):
+// 1) If we have a stored credentialId, derive PK from it (deterministic).
+// 2) Else, create a new passkey (resident credential) and derive from its id.
+// NOTE: This is a demo approach. In production, use a server to manage
+// challenges and consider embedding signing into your AA flow directly.
 async function generatePrivateKeyWithPasskey(): Promise<Hex | undefined> {
   try {
     if (!("PublicKeyCredential" in window)) return undefined;
-    // TODO: Integrate real WebAuthn flow and derive a PK
-    console.info("[passkey] WebAuthn supported; integrate real flow here");
-    return undefined;
-  } catch {
+
+    const CRED_KEY = "potato:cred";
+    const storedCred = localStorage.getItem(CRED_KEY);
+    if (storedCred) {
+      console.info("[passkey] using stored credential id to derive PK");
+      return derivePkFromCredentialId(base64UrlToBytes(storedCred));
+    }
+
+    // Try to recover an existing resident credential (e.g., user cleared localStorage)
+    const recovered = await recoverCredentialIdWithPasskey();
+    if (recovered) {
+      const credIdB64 = bytesToBase64Url(recovered);
+      localStorage.setItem(CRED_KEY, credIdB64);
+      console.info("[passkey] recovered existing credential", {
+        id: credIdB64,
+      });
+      return derivePkFromCredentialId(recovered);
+    }
+
+    const rpId = location.hostname;
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const userId = crypto.getRandomValues(new Uint8Array(32));
+    const publicKey: PublicKeyCredentialCreationOptions = {
+      challenge,
+      rp: { name: "Potato Finance", id: rpId },
+      user: { id: userId, name: "potato-user", displayName: "Potato User" },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }], // ES256
+      authenticatorSelection: {
+        authenticatorAttachment: "platform",
+        residentKey: "preferred",
+        userVerification: "preferred",
+      },
+      attestation: "none",
+    };
+
+    const cred = (await navigator.credentials.create({
+      publicKey,
+    })) as PublicKeyCredential | null;
+    if (!cred) return undefined;
+
+    const rawId = new Uint8Array(cred.rawId);
+    const credIdB64 = bytesToBase64Url(rawId);
+    localStorage.setItem(CRED_KEY, credIdB64);
+    console.info("[passkey] created new credential", { id: credIdB64 });
+    return derivePkFromCredentialId(rawId);
+  } catch (err) {
+    console.error("[passkey] generation error", err);
     return undefined;
   }
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  const b64 = btoa(String.fromCharCode(...bytes));
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function base64UrlToBytes(b64url: string): Uint8Array {
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = b64.length % 4 === 0 ? "" : "===".slice((b64.length % 4) - 1);
+  const str = atob(b64 + pad);
+  const out = new Uint8Array(str.length);
+  for (let i = 0; i < str.length; i++) out[i] = str.charCodeAt(i);
+  return out;
+}
+
+async function recoverCredentialIdWithPasskey(): Promise<
+  Uint8Array | undefined
+> {
+  try {
+    if (!("PublicKeyCredential" in window)) return undefined;
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const publicKey: PublicKeyCredentialRequestOptions = {
+      challenge,
+      userVerification: "preferred",
+    };
+    const cred = (await navigator.credentials.get({
+      publicKey,
+      // Allow conditional/optional mediation where supported
+      ...({ mediation: "optional" } as any),
+    })) as PublicKeyCredential | null;
+    if (!cred) return undefined;
+    return new Uint8Array(cred.rawId);
+  } catch (err) {
+    console.warn("[passkey] credential recovery failed", err);
+    return undefined;
+  }
+}
+
+async function derivePkFromCredentialId(rawId: Uint8Array): Promise<Hex> {
+  // Hash rawId with SHA-256, map into secp256k1 order
+  const digestBuf = await crypto.subtle.digest(
+    "SHA-256",
+    rawId as unknown as BufferSource
+  );
+  const digest = new Uint8Array(digestBuf);
+  const hex = bytesToHex(digest);
+  const n = BigInt(
+    "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"
+  );
+  let x = BigInt("0x" + hex);
+  x = (x % (n - 1n)) + 1n; // in [1, n-1]
+  const out = "0x" + x.toString(16).padStart(64, "0");
+  console.info("[passkey] derived PK from credential id");
+  return out as Hex;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export async function sendExampleGaslessTx() {
