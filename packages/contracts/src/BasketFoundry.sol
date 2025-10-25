@@ -14,19 +14,20 @@ contract BasketFoundry {
         address indexed owner,
         address indexed basket,
         address[] tokens,
-        uint256[] percentages
-    );
+        uint256[] percentages, 
+        bytes32[] priceFeedIds);
 
     function createBasket(
         address _owner,
         address[] memory _tokens,
-        uint256[] memory _percentages
+        uint256[] memory _percentages,
+        bytes32[] memory _priceFeedIds
     ) external returns (address) {
         address basket = address(
-            new Basket(_owner, _tokens, _percentages)
+            new Basket(_owner, _tokens, _percentages, _priceFeedIds)
         );
         userBaskets[_owner].push(basket);
-        emit BasketCreated(_owner, basket, _tokens, _percentages);
+        emit BasketCreated(_owner, basket, _tokens, _percentages, _priceFeedIds);
 
         return basket;
     }
