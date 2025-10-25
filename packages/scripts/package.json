@@ -1,0 +1,17 @@
+{
+  "name": "rebalance-backtest",
+  "version": "1.0.0",
+  "description": "Portfolio rebalancing backtest tool using historical crypto price data",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "backtest": "bun run index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
