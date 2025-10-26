@@ -4,6 +4,7 @@ import PotatoDancer from "./components/PotatoDancer";
 import InvestingBars from "./components/InvestingBars";
 import TopBaskets from "./components/TopBaskets";
 import CreateProfile from "./CreateProfile";
+import Profile from "./Profile";
 import { getPimlicoClients, checkPasskeyAvailability } from "./pimlico";
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [walletReady, setWalletReady] = useState(false);
   const [showPasskeyChoice, setShowPasskeyChoice] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const handleSetupClick = async () => {
     const hasExistingKey = localStorage.getItem("potato:pk");
@@ -50,6 +52,11 @@ function App() {
       setIsAuthenticating(false);
     }
   };
+
+  // Show profile page if setup is complete
+  if (showProfile) {
+    return <Profile />;
+  }
 
   return (
     <div className="landing">
@@ -197,9 +204,17 @@ function App() {
               ×
             </button>
             <CreateProfile
-              onComplete={() => {
+              onComplete={(hash) => {
                 setIsModalOpen(false);
                 setWalletReady(false);
+                // Navigate to profile page after setup
+                if (hash && hash !== "existing") {
+                  // Small delay to show completion before navigating
+                  setTimeout(() => setShowProfile(true), 500);
+                } else if (hash === "existing") {
+                  // If already set up, navigate immediately
+                  setShowProfile(true);
+                }
               }}
             />
           </div>

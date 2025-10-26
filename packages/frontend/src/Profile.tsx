@@ -1,0 +1,313 @@
+import { useEffect, useState } from "react";
+import {
+  getAllUserBasketsInfo,
+  getExistingNickname,
+  getWalletAddress,
+  type BasketInfo,
+} from "./pimlico";
+
+// Supported baskets (same as landing page)
+const SUPPORTED_BASKETS = [
+  {
+    name: "Cushioned Core",
+    description: "Balanced crypto exposure with stable backing",
+    ratios: [
+      { asset: "BTC", pct: 40 },
+      { asset: "ETH", pct: 40 },
+      { asset: "PYUSD", pct: 20 },
+    ],
+    improvement: 4.65,
+    featured: true,
+  },
+  {
+    name: "Balanced Blue",
+    description: "Equal split between leading cryptos",
+    ratios: [
+      { asset: "ETH", pct: 50 },
+      { asset: "BTC", pct: 50 },
+    ],
+    improvement: 3.5,
+  },
+];
+
+// Asset colors for visual consistency
+const ASSET_COLORS: Record<string, string> = {
+  ETH: "#8ec5ff",
+  BTC: "#f4b154",
+  PYUSD: "#61d3a5",
+  USDC: "#2775ca",
+  DAI: "#f5ac37",
+};
+
+// Helper function to determine basket type based on token configuration
+function getBasketType(tokens: BasketInfo["tokens"]): string | null {
+  // Sort tokens by percentage to normalize comparison
+  const config = tokens
+    .map((t) => ({
+      symbol: t.symbol.toUpperCase(),
+      pct: t.percentage,
+    }))
+    .sort((a, b) => b.pct - a.pct);
+
+  // Check for Cushioned Core: 40% BTC, 40% ETH, 20% PYUSD
+  if (config.length === 3) {
+    const hasBTC40 = config.some(
+      (c) => c.symbol.includes("BTC") && c.pct === 40
+    );
+    const hasETH40 = config.some(
+      (c) => c.symbol.includes("ETH") && c.pct === 40
+    );
+    const hasPYUSD20 = config.some(
+      (c) => c.symbol.includes("PYUSD") && c.pct === 20
+    );
+    if (hasBTC40 && hasETH40 && hasPYUSD20) {
+      return "Cushioned Core";
+    }
+  }
+
+  // Check for Balanced Blue: 50% ETH, 50% BTC
+  if (config.length === 2) {
+    const hasBTC50 = config.some(
+      (c) => c.symbol.includes("BTC") && c.pct === 50
+    );
+    const hasETH50 = config.some(
+      (c) => c.symbol.includes("ETH") && c.pct === 50
+    );
+    if (hasBTC50 && hasETH50) {
+      return "Balanced Blue";
+    }
+  }
+
+  return null;
+}
+
+function AssetIcon({ asset }: { asset: string }) {
+  const ink = "#2d1733";
+  if (asset === "BTC" || asset.includes("BTC")) {
+    return (
+      <svg className="asset-icon" viewBox="0 0 20 20" aria-label="BTC">
+        <circle
+          cx="10"
+          cy="10"
+          r="9"
+          fill="#f4b154"
+          stroke={ink}
+          strokeWidth="2"
+        />
+        <text
+          x="10"
+          y="12"
+          textAnchor="middle"
+          fontWeight={900}
+          fontSize="9"
+          fill={ink}
+        >
+          ₿
+        </text>
+      </svg>
+    );
+  }
+  if (asset === "ETH" || asset.includes("ETH")) {
+    return (
+      <svg className="asset-icon" viewBox="0 0 20 20" aria-label="ETH">
+        <polygon
+          points="10,2 15,10 10,12 5,10"
+          fill="#8ec5ff"
+          stroke={ink}
+          strokeWidth="2"
+        />
+        <polygon
+          points="10,18 15,10 10,12 5,10"
+          fill="#b8dcff"
+          stroke={ink}
+          strokeWidth="2"
+        />
+      </svg>
+    );
+  }
+  // PYUSD or generic
+  return (
+    <svg className="asset-icon" viewBox="0 0 20 20" aria-label={asset}>
+      <circle
+        cx="10"
+        cy="10"
+        r="9"
+        fill={ASSET_COLORS[asset] || "#61d3a5"}
+        stroke={ink}
+        strokeWidth="2"
+      />
+      <text
+        x="10"
+        y="12"
+        textAnchor="middle"
+        fontWeight={900}
+        fontSize="9"
+        fill={ink}
+      >
+        {asset[0]}
+      </text>
+    </svg>
+  );
+}
+
+export default function Profile() {
+  const [nickname, setNickname] = useState<string>("");
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [userBaskets, setUserBaskets] = useState<BasketInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadProfileData() {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Get wallet address and nickname
+        const address = await getWalletAddress();
+        setWalletAddress(address);
+
+        const nick = await getExistingNickname(address);
+        setNickname(nick || "");
+
+        // Get all user baskets
+        const baskets = await getAllUserBasketsInfo(address);
+        setUserBaskets(baskets);
+      } catch (err) {
+        console.error("Error loading profile data:", err);
+        setError("Failed to load profile data");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadProfileData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="profile-page">
+        <div className="profile-header">
+          <h1>Loading profile...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="profile-page">
+        <div className="profile-header">
+          <h1>Error</h1>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="profile-page">
+      {/* Profile Header */}
+      <div className="profile-header">
+        <div className="profile-info">
+          <h1>🥔 {nickname || "Potato User"}</h1>
+          <p className="wallet-address">
+            {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+          </p>
+        </div>
+      </div>
+
+      {/* User Baskets Section */}
+      <section className="profile-section">
+        <h2>Your Baskets</h2>
+        {userBaskets.length === 0 ? (
+          <div className="empty-state">
+            <p>
+              You don't have any baskets yet. Send funds to your endpoints to
+              get started!
+            </p>
+          </div>
+        ) : (
+          <div className="user-baskets-grid">
+            {userBaskets.map((basket) => {
+              // Determine basket type and get corresponding data
+              const basketType = getBasketType(basket.tokens);
+              const basketData = SUPPORTED_BASKETS.find(
+                (b) => b.name === basketType
+              );
+
+              // Determine endpoint subdomain
+              const getEndpoint = () => {
+                if (!nickname) return null;
+                if (basketType === "Cushioned Core") {
+                  return `${nickname.toLowerCase()}.cc.pyusd.eth`;
+                } else if (basketType === "Balanced Blue") {
+                  return `${nickname.toLowerCase()}.bb.pyusd.eth`;
+                }
+                return null;
+              };
+              const endpoint = getEndpoint();
+
+              return (
+                <article key={basket.address} className="user-basket-card">
+                  <div className="card-head">
+                    <div>
+                      <h3>{basketType || "Custom Basket"}</h3>
+                      {endpoint && (
+                        <p className="basket-endpoint">{endpoint}</p>
+                      )}
+                      <p className="basket-address">
+                        {basket.address.slice(0, 6)}...
+                        {basket.address.slice(-4)}
+                      </p>
+                    </div>
+                    {basketData && (
+                      <div className="metrics">
+                        <span className="chip-positive">
+                          <span className="value">
+                            +{basketData.improvement.toFixed(2)}%
+                          </span>{" "}
+                          vs HODL
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="basket-tokens">
+                    {basket.tokens.map((token) => (
+                      <div key={token.address} className="token-item">
+                        <div className="token-info">
+                          <AssetIcon asset={token.symbol} />
+                          <div className="token-details">
+                            <div className="token-name">
+                              {token.symbol}
+                              <span className="token-percentage">
+                                {token.percentage}%
+                              </span>
+                            </div>
+                            <div className="token-full-name">{token.name}</div>
+                          </div>
+                        </div>
+                        <div className="token-balance">
+                          <div className="balance-value">
+                            {token.formattedBalance}
+                          </div>
+                          <div className="balance-symbol">{token.symbol}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="card-actions">
+                    <button className="btn primary">Deposit</button>
+                    <button className="btn ghost">Rebalance</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}

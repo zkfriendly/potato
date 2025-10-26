@@ -10,9 +10,11 @@ const entryPoint07Address =
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { PIMLICO_API_KEY } from "./config";
 
-// Setup contract address on Sepolia
+// Contract addresses on Sepolia
 const SETUP_CONTRACT_ADDRESS =
   "0x27D5ca4840b04Aa0e6B1C7f864C5802307476526" as const;
+const BASKET_FOUNDRY_ADDRESS =
+  "0x268c1dfd21A772D392981E070334C2a5dC3DD539" as const;
 
 // Setup contract ABI - including setup and ownerNickname functions
 const SETUP_CONTRACT_ABI = [
@@ -30,6 +32,70 @@ const SETUP_CONTRACT_ABI = [
     inputs: [{ internalType: "address", name: "owner", type: "address" }],
     name: "ownerNickname",
     outputs: [{ internalType: "string", name: "nickname", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+// Basket Foundry ABI
+const BASKET_FOUNDRY_ABI = [
+  {
+    inputs: [{ internalType: "address", name: "_owner", type: "address" }],
+    name: "getUserBaskets",
+    outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+// Basket ABI
+const BASKET_ABI = [
+  {
+    inputs: [],
+    name: "getTokensInfo",
+    outputs: [
+      { internalType: "address[]", name: "_tokens", type: "address[]" },
+      { internalType: "uint256[]", name: "_percentages", type: "uint256[]" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+// ERC20 ABI (minimal for balance and metadata)
+const ERC20_ABI = [
+  {
+    inputs: [{ internalType: "address", name: "account", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "symbol",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "decimals",
+    outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "name",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
     stateMutability: "view",
     type: "function",
   },
@@ -67,7 +133,9 @@ export async function getPimlicoClients(forceNew = false) {
 
   const publicClient = createPublicClient({
     chain: sepolia,
-    transport: http("https://sepolia.rpc.thirdweb.com"),
+    transport: http(
+      "https://eth-sepolia.g.alchemy.com/v2/alvfYVoqtfz_sWLhV9o9AN0Z9HQyyb3O"
+    ),
   });
 
   const pimlicoUrl = `https://api.pimlico.io/v2/sepolia/rpc?apikey=${PIMLICO_API_KEY}`;
@@ -323,4 +391,179 @@ export async function sendSetupTransaction(nickname: string) {
   );
 
   return txHash;
+}
+
+// Basket-related functions
+
+export interface TokenInfo {
+  address: string;
+  percentage: number;
+  symbol: string;
+  decimals: number;
+  name: string;
+  balance: bigint;
+  formattedBalance: string;
+}
+
+export interface BasketInfo {
+  address: string;
+  tokens: TokenInfo[];
+}
+
+// Get all user baskets
+export async function getUserBaskets(userAddress?: string): Promise<string[]> {
+  try {
+    const { publicClient, account } = await getPimlicoClients();
+    const address = userAddress || account.address;
+
+    const baskets = await publicClient.readContract({
+      address: BASKET_FOUNDRY_ADDRESS,
+      abi: BASKET_FOUNDRY_ABI,
+      functionName: "getUserBaskets",
+      args: [address as `0x${string}`],
+    });
+
+    return baskets as string[];
+  } catch (error) {
+    console.error("Error fetching user baskets:", error);
+    return [];
+  }
+}
+
+// Get token info for a basket
+export async function getBasketTokensInfo(
+  basketAddress: string
+): Promise<{ tokens: string[]; percentages: bigint[] }> {
+  const { publicClient } = await getPimlicoClients();
+
+  const result = await publicClient.readContract({
+    address: basketAddress as `0x${string}`,
+    abi: BASKET_ABI,
+    functionName: "getTokensInfo",
+  });
+
+  return {
+    tokens: result[0] as string[],
+    percentages: result[1] as bigint[],
+  };
+}
+
+// Get ERC20 token metadata
+export async function getTokenMetadata(tokenAddress: string): Promise<{
+  symbol: string;
+  decimals: number;
+  name: string;
+}> {
+  const { publicClient } = await getPimlicoClients();
+
+  const [symbol, decimals, name] = await Promise.all([
+    publicClient.readContract({
+      address: tokenAddress as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: "symbol",
+    }),
+    publicClient.readContract({
+      address: tokenAddress as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: "decimals",
+    }),
+    publicClient.readContract({
+      address: tokenAddress as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: "name",
+    }),
+  ]);
+
+  return {
+    symbol: symbol as string,
+    decimals: Number(decimals),
+    name: name as string,
+  };
+}
+
+// Get token balance for a specific holder (basket)
+export async function getTokenBalance(
+  tokenAddress: string,
+  holderAddress: string
+): Promise<bigint> {
+  const { publicClient } = await getPimlicoClients();
+
+  const balance = await publicClient.readContract({
+    address: tokenAddress as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: [holderAddress as `0x${string}`],
+  });
+
+  return balance as bigint;
+}
+
+// Format token amount with decimals
+export function formatTokenAmount(amount: bigint, decimals: number): string {
+  const divisor = BigInt(10 ** decimals);
+  const wholePart = amount / divisor;
+  const fractionalPart = amount % divisor;
+
+  if (fractionalPart === 0n) {
+    return wholePart.toString();
+  }
+
+  const fractionalStr = fractionalPart.toString().padStart(decimals, "0");
+  // Remove trailing zeros
+  const trimmedFractional = fractionalStr.replace(/0+$/, "");
+
+  if (trimmedFractional.length === 0) {
+    return wholePart.toString();
+  }
+
+  return `${wholePart}.${trimmedFractional}`;
+}
+
+// Get complete basket info with token balances
+export async function getBasketInfo(
+  basketAddress: string
+): Promise<BasketInfo> {
+  try {
+    // Get tokens and percentages
+    const { tokens, percentages } = await getBasketTokensInfo(basketAddress);
+
+    // Get metadata and balance for each token
+    const tokenInfoPromises = tokens.map(async (tokenAddress, index) => {
+      const [metadata, balance] = await Promise.all([
+        getTokenMetadata(tokenAddress),
+        getTokenBalance(tokenAddress, basketAddress),
+      ]);
+
+      return {
+        address: tokenAddress,
+        percentage: Number(percentages[index]),
+        symbol: metadata.symbol,
+        decimals: metadata.decimals,
+        name: metadata.name,
+        balance,
+        formattedBalance: formatTokenAmount(balance, metadata.decimals),
+      };
+    });
+
+    const tokenInfos = await Promise.all(tokenInfoPromises);
+
+    return {
+      address: basketAddress,
+      tokens: tokenInfos,
+    };
+  } catch (error) {
+    console.error("Error fetching basket info:", error);
+    throw error;
+  }
+}
+
+// Get all baskets info for a user
+export async function getAllUserBasketsInfo(
+  userAddress?: string
+): Promise<BasketInfo[]> {
+  const baskets = await getUserBaskets(userAddress);
+  const basketInfoPromises = baskets.map((basketAddress) =>
+    getBasketInfo(basketAddress)
+  );
+  return Promise.all(basketInfoPromises);
 }

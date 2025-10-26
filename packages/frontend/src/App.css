@@ -424,3 +424,253 @@
   cursor: pointer;
   color: var(--ink);
 }
+
+/* Profile Page */
+.profile-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #ffde91 0%, #ffc0e1 40%, #fff9f2 100%);
+  padding: 24px 40px 40px;
+}
+
+.profile-header {
+  padding: 32px 0 24px;
+  text-align: center;
+}
+
+.profile-info h1 {
+  font-size: 48px;
+  margin: 0 0 8px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.profile-info .endpoint {
+  font-size: 18px;
+  margin: 8px 0;
+  color: var(--ink);
+}
+
+.profile-info .endpoint strong {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--ink);
+}
+
+.profile-info .wallet-address {
+  font-size: 14px;
+  color: rgba(45, 23, 51, 0.7);
+  font-family: monospace;
+  margin-top: 8px;
+}
+
+.profile-section {
+  margin: 40px 0;
+}
+
+.profile-section h2 {
+  font-size: 32px;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+
+.section-hint {
+  font-size: 16px;
+  color: rgba(45, 23, 51, 0.8);
+  margin: 0 0 20px;
+}
+
+/* Supported Baskets Grid */
+.supported-baskets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.supported-basket-card {
+  background: linear-gradient(180deg, #ffffff, #fffdfb);
+  border: 2px solid var(--ink);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 0 rgba(45, 23, 51, 0.18);
+  position: relative;
+}
+
+.supported-basket-card.featured {
+  outline: 3px solid var(--banana);
+  box-shadow: 0 10px 0 rgba(45, 23, 51, 0.22);
+}
+
+.supported-basket-card .card-head {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.supported-basket-card .card-head h3 {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.basket-description {
+  font-size: 14px;
+  color: rgba(45, 23, 51, 0.7);
+  margin: 8px 0;
+}
+
+/* User Baskets Grid */
+.user-baskets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.user-basket-card {
+  background: linear-gradient(180deg, #ffffff, #f9fff8);
+  border: 2px solid var(--ink);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 0 rgba(45, 23, 51, 0.18);
+}
+
+.user-basket-card .card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  border-bottom: 2px dashed rgba(45, 23, 51, 0.2);
+  padding-bottom: 12px;
+  gap: 12px;
+}
+
+.user-basket-card .card-head h3 {
+  margin: 0 0 4px;
+}
+
+.user-basket-card .card-head .metrics {
+  flex-shrink: 0;
+}
+
+.basket-endpoint {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(255, 222, 145, 0.4);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--ink);
+  display: inline-block;
+  margin: 6px 0 4px;
+}
+
+.basket-address {
+  font-size: 12px;
+  font-family: monospace;
+  color: rgba(45, 23, 51, 0.6);
+  margin: 0;
+}
+
+/* Token Items */
+.basket-tokens {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.token-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+}
+
+.token-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.token-info .asset-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.token-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.token-name {
+  font-weight: 800;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.token-percentage {
+  font-size: 12px;
+  font-weight: 700;
+  background: #d9ffe9;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ink);
+}
+
+.token-full-name {
+  font-size: 12px;
+  color: rgba(45, 23, 51, 0.6);
+}
+
+.token-balance {
+  text-align: right;
+}
+
+.balance-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.balance-symbol {
+  font-size: 12px;
+  color: rgba(45, 23, 51, 0.6);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px dashed var(--ink);
+  border-radius: 20px;
+}
+
+.empty-state p {
+  font-size: 18px;
+  color: rgba(45, 23, 51, 0.7);
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .supported-baskets-grid,
+  .user-baskets-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-info h1 {
+    font-size: 36px;
+  }
+
+  .profile-section h2 {
+    font-size: 24px;
+  }
+}
