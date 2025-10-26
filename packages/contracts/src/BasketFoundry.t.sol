@@ -15,7 +15,7 @@ contract BasketFoundryTest is Test {
     bytes32 public constant ETH_PRICE_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
 
     function setUp() public {
-        basketFoundry = new BasketFoundry();
+        basketFoundry = new BasketFoundry(address(new Basket()));
     }
 
     function test_createBasket() public {

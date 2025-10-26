@@ -12,8 +12,8 @@ contract BasketFoundry {
     address public immutable implementation;
     mapping(address owner => address[] baskets) public userBaskets;
 
-    constructor() {
-        implementation = address(new Basket());
+    constructor(address _implementation) {
+        implementation = _implementation;
     }
 
     event BasketCreated(
