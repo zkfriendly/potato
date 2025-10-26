@@ -48,7 +48,7 @@ contract BasketFoundryTest is Test {
         assertEq(_percentages[0], 50);
         assertEq(_percentages[1], 50);
 
-        // Verify the basket received 0.01 ETH
-        assertEq(address(_basket).balance, 0.01 ether);
+        // Verify the basket received 0.001 ETH
+        assertEq(address(_basket).balance, 0.001 ether);
     }
 }
