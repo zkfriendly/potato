@@ -4,6 +4,9 @@ import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable } from "hardhat/config";
 import hardhatVerify from "@nomicfoundation/hardhat-verify";
 
+import * as dotenv from "dotenv";
+dotenv.config();
+
 const config: HardhatUserConfig = {
   plugins: [hardhatToolboxViemPlugin, hardhatVerify],
   paths: {
@@ -43,9 +46,7 @@ const config: HardhatUserConfig = {
     hedera: {
       type: "http",
       url: configVariable("HEDERA_RPC_URL"),
-      accounts: [
-        configVariable("HEDERA_PRIVATE_KEY"),
-      ]
+      accounts: [configVariable("HEDERA_PRIVATE_KEY")],
     },
   },
   chainDescriptors: {
@@ -55,16 +56,16 @@ const config: HardhatUserConfig = {
         etherscan: {
           name: "Sepolia Etherscan",
           url: "https://sepolia.etherscan.io/",
-          apiUrl: "https://api.etherscan.io/v2/api"
+          apiUrl: "https://api.etherscan.io/v2/api",
         },
       },
     },
   },
   verify: {
     etherscan: {
-      apiKey: configVariable("ETHERSCAN_API_KEY")
+      apiKey: configVariable("ETHERSCAN_API_KEY"),
     },
   },
-};
+} as any;
 
 export default config;
