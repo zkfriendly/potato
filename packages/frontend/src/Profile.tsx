@@ -13,7 +13,7 @@ type ProfileProps = {
 // Supported baskets (same as landing page)
 const SUPPORTED_BASKETS = [
   {
-    name: "Cushioned Core",
+    name: "Balanced Blue",
     description: "Balanced crypto exposure with stable backing",
     ratios: [
       { asset: "BTC", pct: 40 },
@@ -24,7 +24,7 @@ const SUPPORTED_BASKETS = [
     featured: true,
   },
   {
-    name: "Balanced Blue",
+    name: "Cushioned Core",
     description: "Equal split between leading cryptos",
     ratios: [
       { asset: "ETH", pct: 50 },
@@ -53,7 +53,7 @@ function getBasketType(tokens: BasketInfo["tokens"]): string {
     }))
     .sort((a, b) => b.pct - a.pct);
 
-  // Check for Cushioned Core: 40% BTC, 40% ETH, 20% PYUSD
+  // Check for Balanced Blue: 40% BTC, 40% ETH, 20% PYUSD
   if (config.length === 3) {
     const hasBTC40 = config.some(
       (c) => c.symbol.includes("BTC") && c.pct === 40
@@ -65,18 +65,18 @@ function getBasketType(tokens: BasketInfo["tokens"]): string {
       (c) => c.symbol.includes("PYUSD") && c.pct === 20
     );
     if (hasBTC40 && hasETH40 && hasPYUSD20) {
-      return "Cushioned Core";
+      return "Balanced Blue";
     }
   }
 
-  // Check for Balanced Blue: 50% ETH, 50% BTC (or any 2-token basket)
-  // Default to Balanced Blue for 2-token baskets
+  // Check for Cushioned Core: 50% ETH, 50% BTC (or any 2-token basket)
+  // Default to Cushioned Core for 2-token baskets
   if (config.length === 2) {
-    return "Balanced Blue";
+    return "Cushioned Core";
   }
 
-  // Default to Balanced Blue if unknown
-  return "Balanced Blue";
+  // Default to Cushioned Core if unknown
+  return "Cushioned Core";
 }
 
 function AssetIcon({ asset }: { asset: string }) {

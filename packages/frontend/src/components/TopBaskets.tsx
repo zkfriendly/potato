@@ -8,7 +8,7 @@ type Basket = {
 
 const baskets: Basket[] = [
   {
-    name: "Cushioned Core",
+    name: "Balanced Blue",
     ratios: [
       { asset: "BTC", pct: 40 },
       { asset: "ETH", pct: 40 },
@@ -19,7 +19,7 @@ const baskets: Basket[] = [
     featured: true,
   },
   {
-    name: "Balanced Blue",
+    name: "Cushioned Core",
     ratios: [
       { asset: "ETH", pct: 50 },
       { asset: "BTC", pct: 50 },

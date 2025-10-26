@@ -112,10 +112,23 @@ function App() {
           setSetupStatus("");
         }, 1000);
       } else {
-        // Existing passkey or no nickname - show modal to check/set nickname
-        setWalletReady(true);
-        setIsModalOpen(true);
-        setSetupStatus("");
+        // Existing passkey - check if nickname already exists
+        setSetupStatus("Checking your profile...");
+        const existingNickname = await getExistingNickname();
+
+        if (existingNickname) {
+          // Has nickname - go directly to profile
+          setSetupStatus("Welcome back! Redirecting...");
+          setTimeout(() => {
+            setShowProfile(true);
+            setSetupStatus("");
+          }, 500);
+        } else {
+          // No nickname - show modal to set one
+          setWalletReady(true);
+          setIsModalOpen(true);
+          setSetupStatus("");
+        }
       }
     } catch (error) {
       console.log("Passkey authentication cancelled or failed:", error);
@@ -275,8 +288,7 @@ function App() {
             <section className="create-profile">
               <h2>Choose your nickname 🥔</h2>
               <p className="hint">
-                First, pick a nickname for your Potato profile. This will be
-                used to create your personal endpoints and will be saved with
+                Pick a nickname for your Potato profile. This will be saved with
                 your passkey.
               </p>
               <label>
@@ -291,14 +303,6 @@ function App() {
                   }
                 />
               </label>
-              <div className="ens-preview">
-                Your endpoints:{" "}
-                <strong>
-                  {pendingNickname
-                    ? `${pendingNickname.toLowerCase()}.cc.pyusd.eth`
-                    : "<nickname>.cc.pyusd.eth"}
-                </strong>
-              </div>
               <div className="card-actions">
                 <button
                   className="btn primary"
