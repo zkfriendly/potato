@@ -3,12 +3,19 @@ import {
   getAllUserBasketsInfo,
   getExistingNickname,
   getWalletAddress,
+  calculateBasketValue,
+  rebalanceBasket,
   type BasketInfo,
 } from "./pimlico";
 
 type ProfileProps = {
   onLogout?: () => void;
 };
+
+interface BasketWithValue extends BasketInfo {
+  totalValue?: number;
+  tokenValues?: number[];
+}
 
 // Supported baskets (same as landing page)
 const SUPPORTED_BASKETS = [
@@ -151,9 +158,40 @@ function AssetIcon({ asset }: { asset: string }) {
 export default function Profile({ onLogout }: ProfileProps) {
   const [nickname, setNickname] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
-  const [userBaskets, setUserBaskets] = useState<BasketInfo[]>([]);
+  const [userBaskets, setUserBaskets] = useState<BasketWithValue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rebalancing, setRebalancing] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const loadBasketData = async (address: string) => {
+    try {
+      // Get all user baskets
+      const baskets = await getAllUserBasketsInfo(address);
+
+      // Calculate values for each basket based on token balances and prices
+      const basketsWithValues = await Promise.all(
+        baskets.map(async (basket) => {
+          try {
+            const value = await calculateBasketValue(basket.tokens);
+            return { ...basket, ...value };
+          } catch (err) {
+            console.error(
+              `Error calculating value for basket ${basket.address}:`,
+              err
+            );
+            return basket;
+          }
+        })
+      );
+
+      setUserBaskets(basketsWithValues);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error("Error loading basket data:", err);
+      setError("Failed to load basket data");
+    }
+  };
 
   useEffect(() => {
     async function loadProfileData() {
@@ -161,16 +199,15 @@ export default function Profile({ onLogout }: ProfileProps) {
         setIsLoading(true);
         setError(null);
 
-        // Get wallet address and nickname
+        // Get wallet address and nickname (only once)
         const address = await getWalletAddress();
         setWalletAddress(address);
 
         const nick = await getExistingNickname(address);
         setNickname(nick || "");
 
-        // Get all user baskets
-        const baskets = await getAllUserBasketsInfo(address);
-        setUserBaskets(baskets);
+        // Load basket data initially
+        await loadBasketData(address);
       } catch (err) {
         console.error("Error loading profile data:", err);
         setError("Failed to load profile data");
@@ -181,6 +218,35 @@ export default function Profile({ onLogout }: ProfileProps) {
 
     loadProfileData();
   }, []);
+
+  // Poll for updates every 10 seconds
+  useEffect(() => {
+    if (!walletAddress) return;
+
+    const interval = setInterval(() => {
+      loadBasketData(walletAddress);
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [walletAddress]);
+
+  const handleRebalance = async (basketAddress: string) => {
+    try {
+      setRebalancing(basketAddress);
+      await rebalanceBasket(basketAddress);
+      alert("Rebalance successful!");
+
+      // Refresh basket data (will get new balances and recalculate value)
+      if (walletAddress) {
+        await loadBasketData(walletAddress);
+      }
+    } catch (err) {
+      console.error("Error rebalancing:", err);
+      alert(`Rebalance failed: ${err}`);
+    } finally {
+      setRebalancing(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -241,6 +307,12 @@ export default function Profile({ onLogout }: ProfileProps) {
           <p className="wallet-address">
             Wallet: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
           </p>
+          {lastUpdated && (
+            <p className="last-updated">
+              Last updated: {lastUpdated.toLocaleTimeString()} • Auto-refreshing
+              every 10s
+            </p>
+          )}
         </div>
       </div>
 
@@ -330,6 +402,15 @@ export default function Profile({ onLogout }: ProfileProps) {
                     )}
                   </div>
 
+                  {basket.totalValue !== undefined && (
+                    <div className="basket-total-value">
+                      <span className="value-label">Total Value:</span>
+                      <span className="value-amount">
+                        ${basket.totalValue.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="basket-tokens">
                     {basket.tokens.map((token) => (
                       <div key={token.address} className="token-item">
@@ -356,8 +437,15 @@ export default function Profile({ onLogout }: ProfileProps) {
                   </div>
 
                   <div className="card-actions">
-                    <button className="btn primary">Deposit</button>
-                    <button className="btn ghost">Rebalance</button>
+                    <button
+                      className="btn primary"
+                      onClick={() => handleRebalance(basket.address)}
+                      disabled={rebalancing === basket.address}
+                    >
+                      {rebalancing === basket.address
+                        ? "Rebalancing..."
+                        : "Rebalance"}
+                    </button>
                   </div>
                 </article>
               );

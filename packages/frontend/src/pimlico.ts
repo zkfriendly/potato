@@ -48,8 +48,94 @@ const BASKET_FOUNDRY_ABI = [
   },
 ] as const;
 
-// Basket ABI
+// Basket ABI - Complete ABI for basket contract
 const BASKET_ABI = [
+  { inputs: [], stateMutability: "nonpayable", type: "constructor" },
+  { inputs: [], name: "ArraysLengthMismatch", type: "error" },
+  { inputs: [], name: "InvalidInitialization", type: "error" },
+  { inputs: [], name: "NotInitializing", type: "error" },
+  {
+    inputs: [{ internalType: "address", name: "owner", type: "address" }],
+    name: "OwnableInvalidOwner",
+    type: "error",
+  },
+  {
+    inputs: [{ internalType: "address", name: "account", type: "address" }],
+    name: "OwnableUnauthorizedAccount",
+    type: "error",
+  },
+  { inputs: [], name: "PercentagesMustSumToExactly100", type: "error" },
+  { inputs: [], name: "PriceFeedIdNotFound", type: "error" },
+  { inputs: [], name: "PriceNotFound", type: "error" },
+  { inputs: [], name: "TotalValueIsZero", type: "error" },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint64",
+        name: "version",
+        type: "uint64",
+      },
+    ],
+    name: "Initialized",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "previousOwner",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "OwnershipTransferred",
+    type: "event",
+  },
+  {
+    inputs: [],
+    name: "PYTH_ADDRESS",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "bytes[][]", name: "priceUpdates", type: "bytes[][]" },
+    ],
+    name: "getBasketValue",
+    outputs: [
+      { internalType: "int64", name: "totalValue", type: "int64" },
+      { internalType: "int64[]", name: "tokenValues", type: "int64[]" },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_token", type: "address" },
+      { internalType: "bytes[]", name: "priceUpdate", type: "bytes[]" },
+    ],
+    name: "getTokenPrice",
+    outputs: [{ internalType: "int64", name: "", type: "int64" }],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getTokens",
+    outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
   {
     inputs: [],
     name: "getTokensInfo",
@@ -62,9 +148,74 @@ const BASKET_ABI = [
   },
   {
     inputs: [],
+    name: "getTokensLength",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_owner", type: "address" },
+      { internalType: "address[]", name: "_tokens", type: "address[]" },
+      { internalType: "uint256[]", name: "_percentages", type: "uint256[]" },
+      { internalType: "bytes32[]", name: "_priceFeedIds", type: "bytes32[]" },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "owner",
     outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "bytes[][]", name: "priceUpdates", type: "bytes[][]" },
+    ],
+    name: "rebalanceBasket",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "renounceOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "token", type: "address" }],
+    name: "tokenPercentage",
+    outputs: [{ internalType: "uint256", name: "percentage", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "token", type: "address" }],
+    name: "tokenPriceFeedId",
+    outputs: [
+      { internalType: "bytes32", name: "priceFeedId", type: "bytes32" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "tokens",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "newOwner", type: "address" }],
+    name: "transferOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
 ] as const;
@@ -572,4 +723,195 @@ export async function getAllUserBasketsInfo(
     getBasketInfo(basketAddress)
   );
   return Promise.all(basketInfoPromises);
+}
+
+// Pyth price feed IDs
+const PYTH_PRICE_FEED_IDS = {
+  BTC: "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+  ETH: "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+  PYUSD: "0xc1da1b73d7f01e7ddd54b3766cf7fcd644395ad14f70aa706ec5384c59e76692",
+};
+
+// Fetch price feed data from Pyth
+export async function fetchPriceFeedData(): Promise<string[][]> {
+  const ids = Object.values(PYTH_PRICE_FEED_IDS);
+  const idsParam = ids.map((id) => `ids[]=${id}`).join("&");
+  const url = `https://hermes.pyth.network/v2/updates/price/latest?${idsParam}`;
+
+  console.log("Fetching price feed data from:", url);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to fetch price feed data");
+  }
+
+  const data = await response.json();
+  console.log("Price feed data received:", {
+    dataLength: data.binary.data.length,
+    parsed: data.parsed,
+  });
+
+  // Return the binary data as needed for the contract
+  // The API returns data.binary.data which is an array of hex strings
+  // We need to wrap each in an array for the bytes[][] type
+  const priceUpdates = data.binary.data.map((hexString: string) => [
+    `0x${hexString}`,
+  ]);
+  console.log("Formatted price updates:", priceUpdates.length, "feeds");
+  return priceUpdates;
+}
+
+// Get prices from Pyth API
+async function getPrices(): Promise<Record<string, number>> {
+  const ids = Object.values(PYTH_PRICE_FEED_IDS);
+  const idsParam = ids.map((id) => `ids[]=${id}`).join("&");
+  const url = `https://hermes.pyth.network/v2/updates/price/latest?${idsParam}&parsed=true`;
+
+  console.log("Fetching prices from:", url);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to fetch price data");
+  }
+
+  const data = await response.json();
+  console.log("Raw price data:", data);
+
+  // Create a map of symbol to price
+  const prices: Record<string, number> = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data.parsed.forEach((priceData: any) => {
+    // Normalize the ID (ensure it has 0x prefix)
+    const id = priceData.id.startsWith("0x")
+      ? priceData.id
+      : `0x${priceData.id}`;
+
+    console.log("Processing price feed:", {
+      rawId: priceData.id,
+      normalizedId: id,
+      price: priceData.price.price,
+      expo: priceData.price.expo,
+    });
+
+    // Price is in expo format, so we need to apply the exponent
+    const price =
+      Number(priceData.price.price) /
+      Math.pow(10, Math.abs(priceData.price.expo));
+
+    // Map feed ID to symbol - normalize both sides for comparison
+    const btcId = PYTH_PRICE_FEED_IDS.BTC.toLowerCase();
+    const ethId = PYTH_PRICE_FEED_IDS.ETH.toLowerCase();
+    const pyusdId = PYTH_PRICE_FEED_IDS.PYUSD.toLowerCase();
+    const normalizedId = id.toLowerCase();
+
+    console.log("Comparing:", { normalizedId, btcId, ethId, pyusdId });
+
+    if (normalizedId === btcId) {
+      prices.BTC = price;
+      console.log("✅ Set BTC price:", price);
+    }
+    if (normalizedId === ethId) {
+      prices.ETH = price;
+      console.log("✅ Set ETH price:", price);
+    }
+    if (normalizedId === pyusdId) {
+      prices.PYUSD = price;
+      console.log("✅ Set PYUSD price:", price);
+    }
+  });
+
+  console.log("Final prices:", prices);
+  return prices;
+}
+
+// Calculate basket total value from token balances and prices
+export async function calculateBasketValue(
+  tokens: TokenInfo[]
+): Promise<{ totalValue: number; tokenValues: number[] }> {
+  try {
+    const prices = await getPrices();
+
+    const tokenValues = tokens.map((token) => {
+      // Get price for this token symbol
+      let price = 0;
+      if (token.symbol.includes("BTC")) price = prices.BTC || 0;
+      else if (token.symbol.includes("ETH")) price = prices.ETH || 0;
+      else if (token.symbol.includes("PYUSD")) price = prices.PYUSD || 0;
+
+      // Calculate value: balance (in tokens) * price (per token)
+      // Balance is already formatted as a number with proper decimals
+      const balance = Number(token.formattedBalance);
+      const value = balance * price;
+
+      console.log(`${token.symbol}: ${balance} tokens × $${price} = $${value}`);
+      return value;
+    });
+
+    const totalValue = tokenValues.reduce((sum, val) => sum + val, 0);
+
+    console.log(
+      "Total basket value:",
+      totalValue,
+      "Token values:",
+      tokenValues
+    );
+    return { totalValue, tokenValues };
+  } catch (error) {
+    console.error("Error calculating basket value:", error);
+    return { totalValue: 0, tokenValues: [] };
+  }
+}
+
+// Rebalance a basket
+export async function rebalanceBasket(basketAddress: string): Promise<string> {
+  console.log("🔄 Starting rebalance for basket:", basketAddress);
+
+  try {
+    const { smartAccountClient, publicClient } = await getPimlicoClients();
+    console.log("✅ Got Pimlico clients");
+
+    const priceUpdates = await fetchPriceFeedData();
+    console.log("✅ Got price feed data:", priceUpdates.length, "feeds");
+
+    console.log("📤 Sending rebalance transaction...");
+    const txHash = await smartAccountClient.sendTransaction({
+      to: basketAddress as `0x${string}`,
+      value: 0n,
+      data: encodeFunctionData({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        abi: BASKET_ABI as any,
+        functionName: "rebalanceBasket",
+        args: [priceUpdates],
+      }),
+    });
+
+    console.log("✅ Rebalance transaction sent:", txHash);
+    console.log(
+      "🔗 View on Etherscan:",
+      `https://sepolia.etherscan.io/tx/${txHash}`
+    );
+
+    console.log("⏳ Waiting for transaction confirmation...");
+    // Wait for transaction receipt
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: txHash,
+    });
+
+    console.log("✅ Transaction confirmed:", receipt);
+
+    if (receipt.status === "reverted") {
+      throw new Error(
+        `Rebalance failed. Check on Etherscan: https://sepolia.etherscan.io/tx/${txHash}`
+      );
+    }
+
+    console.log(
+      `🎉 Rebalance successful: https://sepolia.etherscan.io/tx/${txHash}`
+    );
+
+    return txHash;
+  } catch (error) {
+    console.error("❌ Rebalance error:", error);
+    throw error;
+  }
 }
