@@ -1,3 +1,5 @@
 {
-  "PotatoFinanceEntrypointModule#PotatoFinanceEntrypoint": "0x27D5ca4840b04Aa0e6B1C7f864C5802307476526"
+  "BasketImplementationModule#BasketImplementation": "0xbC847fCbd4868D507592AF69eDA02AE47c6ac7EF",
+  "BasketFoundryModule#BasketFoundry": "0xbb3f4d19D323760e6407606b80b73151094a7A62",
+  "PotatoFinanceEntrypointModule#PotatoFinanceEntrypoint": "0x127931Fb79cc189A7EF59d927003Dea8229B9fC9"
 }

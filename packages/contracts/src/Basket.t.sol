@@ -38,7 +38,7 @@ contract BasketTest is Test {
         percentages[1] = 50;
 
         address clone = Clones.clone(basketImplementation);
-        basket = Basket(clone);
+        basket = Basket(payable(clone));
         basket.initialize(makeAddr("owner"), tokens, percentages, priceFeedIds);
     }
 
@@ -100,7 +100,7 @@ contract BasketTest is Test {
 
         // Reassign the basket under test using a new clone
         address clone = Clones.clone(basketImplementation);
-        basket = Basket(clone);
+        basket = Basket(payable(clone));
         basket.initialize(makeAddr("owner2"), tokens, percentages, priceFeedIds);
 
         // Map token addresses to their feed ids for mocking

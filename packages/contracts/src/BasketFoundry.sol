@@ -12,6 +12,8 @@ contract BasketFoundry {
     address public immutable implementation;
     mapping(address owner => address[] baskets) public userBaskets;
 
+    error InsufficientBalance();
+
     constructor(address _implementation) {
         implementation = _implementation;
     }
@@ -29,11 +31,19 @@ contract BasketFoundry {
         address[] memory _tokens,
         uint256[] memory _percentages,
         bytes32[] memory _priceFeedIds
-    ) external returns (address) {
+    ) external payable returns (address) {
         address basket = Clones.clone(implementation);
-        Basket(basket).initialize(_owner, _tokens, _percentages, _priceFeedIds);
+        Basket(payable(basket)).initialize(_owner, _tokens, _percentages, _priceFeedIds);
         userBaskets[_owner].push(basket);
         emit BasketCreated(_owner, basket, _tokens, _percentages, _priceFeedIds);
+
+        // Transfer 0.01 ETH to the newly created basket
+        uint256 fundingAmount = 0.01 ether;
+        if (address(this).balance < fundingAmount) {
+            revert InsufficientBalance();
+        }
+        (bool success, ) = basket.call{value: fundingAmount}("");
+        require(success, "ETH transfer failed");
 
         return basket;
     }
@@ -41,4 +51,7 @@ contract BasketFoundry {
     function getUserBaskets(address _owner) external view returns (address[] memory) {
         return userBaskets[_owner];
     }
+
+    /// @notice Allow contract to receive ETH
+    receive() external payable {}
 }

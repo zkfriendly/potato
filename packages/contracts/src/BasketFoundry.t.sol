@@ -16,6 +16,9 @@ contract BasketFoundryTest is Test {
 
     function setUp() public {
         basketFoundry = new BasketFoundry(address(new Basket()));
+
+        // Fund the basket foundry with 1 ETH for testing
+        vm.deal(address(basketFoundry), 1 ether);
     }
 
     function test_createBasket() public {
@@ -33,23 +36,19 @@ contract BasketFoundryTest is Test {
         priceFeedIds[0] = BTC_PRICE_FEED_ID;
         priceFeedIds[1] = ETH_PRICE_FEED_ID;
 
-        address _basket = basketFoundry.createBasket(
-            owner,
-            tokens,
-            percentages,
-            priceFeedIds
-        );
+        address _basket = basketFoundry.createBasket(owner, tokens, percentages, priceFeedIds);
 
         assertEq(basketFoundry.getUserBaskets(owner)[0], _basket);
-        assertEq(Basket(_basket).getTokensLength(), 2);
+        assertEq(Basket(payable(_basket)).getTokensLength(), 2);
 
-        (address[] memory _tokens, uint256[] memory _percentages) = Basket(
-            _basket
-        ).getTokensInfo();
+        (address[] memory _tokens, uint256[] memory _percentages) = Basket(payable(_basket)).getTokensInfo();
 
         assertEq(_tokens[0], BTC_TOKEN);
         assertEq(_tokens[1], ETH_TOKEN);
         assertEq(_percentages[0], 50);
         assertEq(_percentages[1], 50);
+
+        // Verify the basket received 0.01 ETH
+        assertEq(address(_basket).balance, 0.01 ether);
     }
 }

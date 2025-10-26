@@ -127,4 +127,7 @@ contract Basket is OwnableUpgradeable {
             totalValue += tokenValues[i];
         }
     }
+
+    /// @notice Allow contract to receive ETH
+    receive() external payable {}
 }

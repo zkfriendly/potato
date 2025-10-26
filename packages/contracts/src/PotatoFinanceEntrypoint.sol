@@ -38,7 +38,7 @@ contract PotatoFinanceEntrypoint {
     mapping(string nickname => address owner) public nicknameOwner;
 
     constructor(address _basketFoundry) {
-        basketFoundry = BasketFoundry(_basketFoundry);
+        basketFoundry = BasketFoundry(payable(_basketFoundry));
     }
 
     /**
