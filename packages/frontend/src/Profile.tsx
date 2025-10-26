@@ -329,7 +329,7 @@ export default function Profile({ onLogout }: ProfileProps) {
                             className="copy-btn"
                             onClick={() => {
                               navigator.clipboard.writeText(endpoint);
-                              alert("ENS address copied!");
+                              console.log("📋 Copied to clipboard:", endpoint);
                             }}
                             title="Copy address"
                           >

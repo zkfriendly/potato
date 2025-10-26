@@ -10,8 +10,8 @@ import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { PIMLICO_API_KEY } from "./config";
 
 // Contract addresses on Sepolia
-const SETUP_CONTRACT_ADDRESS = "0x03dad733b89471906CA03a2415bAe4ce84003e88" as const;
-const BASKET_FOUNDRY_ADDRESS = "0x8aC9a78b9b1Ab340c09c31A70c746e8AB626527F" as const;
+const SETUP_CONTRACT_ADDRESS = "0x6d7e9b04ea3C35C6D0d4b912071976aAb1b51919" as const;
+const BASKET_FOUNDRY_ADDRESS = "0xfb63FD3482EB51Eca0f6c69969B735e2C544748A" as const;
 
 // Setup contract ABI - including setup and ownerNickname functions
 const SETUP_CONTRACT_ABI = [

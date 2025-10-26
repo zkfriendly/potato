@@ -1,29 +1,17 @@
-import { useMemo, useState, useEffect } from "react";
-import {
-  sendSetupTransaction,
-  getExistingNickname,
-  getWalletAddress,
-} from "./pimlico";
+import { useState, useEffect } from "react";
+import { sendSetupTransaction, getExistingNickname, getWalletAddress } from "./pimlico";
 
 type CreateProfileProps = {
   onComplete?: (hash: string) => void;
   initialNickname?: string;
 };
 
-export default function CreateProfile({
-  onComplete,
-  initialNickname = "",
-}: CreateProfileProps) {
+export default function CreateProfile({ onComplete, initialNickname = "" }: CreateProfileProps) {
   const [nick, setNick] = useState(initialNickname);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [existingNickname, setExistingNickname] = useState<string | null>(null);
   const [walletAddress, setWalletAddress] = useState<string>("");
-
-  const ens = useMemo(
-    () => (nick ? `${nick.toLowerCase()}.pyusd.eth` : ""),
-    [nick]
-  );
 
   // Check if nickname already exists on mount
   useEffect(() => {
@@ -59,12 +47,10 @@ export default function CreateProfile({
       <section className="create-profile">
         <h2>Profile already set up! 🥔</h2>
         <p className="hint">
-          Your Potato profile is already configured with the nickname:{" "}
-          <strong>{existingNickname}</strong>
+          Your Potato profile is already configured with the nickname: <strong>{existingNickname}</strong>
         </p>
         <div className="ens-preview">
-          Your endpoint:{" "}
-          <strong>{existingNickname.toLowerCase()}.pyusd.eth</strong>
+          Your endpoint: <strong>{existingNickname.toLowerCase()}.pyusd.eth</strong>
         </div>
         {walletAddress && (
           <p style={{ fontSize: "0.8em", color: "#666", marginTop: "1em" }}>
@@ -94,30 +80,21 @@ export default function CreateProfile({
     <section className="create-profile">
       <h2>Wallet authenticated! 🥔</h2>
       <p className="hint">
-        {initialNickname
-          ? "Confirm your nickname to complete setup."
-          : "Choose a nickname for your Potato profile. It'll become your personal endpoint to easily invest by sending PYUSD to it."}
+        {initialNickname ? "Confirm your nickname to complete setup." : "Choose a nickname for your Potato profile."}
       </p>
       <label>
         <input
           type="text"
-          placeholder="e.g. zkfriendly"
+          placeholder="e.g. zkfriendly (no spaces)"
           value={nick}
-          onChange={(e) =>
-            setNick(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ""))
-          }
+          onChange={(e) => setNick(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ""))}
           disabled={!!initialNickname}
           readOnly={!!initialNickname}
         />
       </label>
-      <div className="ens-preview">
-        Your endpoints:{" "}
-        <strong>
-          {ens
-            ? `${ens.replace(".pyusd.eth", "")}.cc.pyusd.eth`
-            : "<nickname>.cc.pyusd.eth"}
-        </strong>
-      </div>
+      <p className="hint" style={{ fontSize: "0.9em", marginTop: "0.5em" }}>
+        Use only letters, numbers, hyphens, and underscores. No spaces allowed.
+      </p>
       <div className="card-actions">
         <button
           className="btn primary"
@@ -125,15 +102,18 @@ export default function CreateProfile({
           onClick={async () => {
             const trimmedNick = nick.trim();
             if (!trimmedNick) {
-              alert("Please enter a nickname");
+              console.error("Please enter a nickname");
               return;
             }
             try {
               setIsSubmitting(true);
               const hash = await sendSetupTransaction(trimmedNick);
-              onComplete ? onComplete(hash) : alert(`Setup complete: ${hash}`);
+              console.log("Setup complete:", hash);
+              if (onComplete) {
+                onComplete(hash);
+              }
             } catch (e) {
-              alert(String(e));
+              console.error("Setup error:", e);
             } finally {
               setIsSubmitting(false);
             }

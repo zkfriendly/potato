@@ -76,19 +76,16 @@ contract Basket is OwnableUpgradeable {
      * @dev this is a mock rebalancing logic for prototype purposes
      */
     function rebalanceBasket(bytes[] calldata priceUpdates) public payable {
-        (int64 totalValue, int64[] memory tokenPrices) = getBasketValue(priceUpdates);
+        (uint256 totalValue, uint256[] memory tokenPrices) = getBasketValue(priceUpdates);
         for (uint256 i = 0; i < tokens.length; i++) {
-            int256 targetValueInt = (int256(totalValue) * int256(tokenPercentage[tokens[i]])) / 100;
-            uint256 targetBalanceInUSD = targetValueInt <= 0 ? 0 : uint256(targetValueInt);
-            uint256 targetBalance = tokenPrices[i] == 0
-                ? 0
-                : (targetBalanceInUSD * 10 ** 18) / uint256(int256(tokenPrices[i]));
+            uint256 targetValue = (totalValue * tokenPercentage[tokens[i]]) / 100;
+            uint256 targetBalance = targetValue / tokenPrices[i];
             MockERC20(tokens[i]).setBalance(address(this), targetBalance);
         }
         emit Rebalanced();
     }
 
-    function getTokenPrice(address _token) public returns (int64) {
+    function getTokenPrice(address _token) public view returns (uint256) {
         bytes32 priceFeedId = tokenPriceFeedId[_token];
         if (priceFeedId == bytes32(0)) {
             revert PriceFeedIdNotFound();
@@ -99,39 +96,22 @@ contract Basket is OwnableUpgradeable {
         if (price.price == 0) {
             revert PriceNotFound();
         }
-        int32 expo = price.expo;
         int256 priceInt = int256(price.price);
-
-        // Adjust price to 18 decimals (wei)
-        if (expo > -18) {
-            // Multiply by 10 ** (expoDiff)
-            uint256 expoDiff = uint256(int256(expo) + 18);
-            return int64(priceInt * int256(10 ** expoDiff));
-        } else if (expo < -18) {
-            // Divide by 10 ** (-expoDiff)
-            uint256 expoDiff = uint256(int256(-expo) - 18);
-            return int64(priceInt / int256(10 ** expoDiff));
-        } else {
-            // Already at 18 decimals
-            return int64(priceInt);
-        }
+        uint256 priceInUSD = uint256(priceInt) * 10 ** 10;
+        return priceInUSD;
     }
 
     function getBasketValue(
         bytes[] calldata priceUpdates
-    ) public returns (int64 totalValue, int64[] memory tokenPrices) {
+    ) public returns (uint256 totalValue, uint256[] memory tokenPrices) {
         updatePriceFeeds(priceUpdates);
-        tokenPrices = new int64[](tokens.length);
+        tokenPrices = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            int64 price = getTokenPrice(tokens[i]);
+            uint256 price = getTokenPrice(tokens[i]);
             tokenPrices[i] = price;
-
-            // Get the balance of this token in the basket
             uint256 balance = MockERC20(tokens[i]).balanceOf(address(this));
-
-            // Calculate value: balance * price / 10^18 (to get USD value in 18 decimals)
-            int256 tokenValue = (int256(balance) * int256(price)) / 1e18;
-            totalValue += int64(tokenValue);
+            uint256 tokenValue = balance * price;
+            totalValue += tokenValue;
         }
     }
 
