@@ -23,6 +23,8 @@ contract Basket is OwnableUpgradeable {
     error PriceNotFound();
     error TotalValueIsZero();
 
+    event Rebalanced();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -73,25 +75,26 @@ contract Basket is OwnableUpgradeable {
      * @param priceUpdates The price updates for the tokens
      * @dev this is a mock rebalancing logic for prototype purposes
      */
-    function rebalanceBasket(bytes[][] calldata priceUpdates) public payable {
-        (int64 totalValue, ) = getBasketValue(priceUpdates);
+    function rebalanceBasket(bytes[] calldata priceUpdates) public payable {
+        (int64 totalValue, int64[] memory tokenValues) = getBasketValue(priceUpdates);
         for (uint256 i = 0; i < tokens.length; i++) {
             int256 targetValueInt = (int256(totalValue) * int256(tokenPercentage[tokens[i]])) / 100;
-            uint256 targetBalance = targetValueInt <= 0 ? 0 : uint256(targetValueInt);
+            uint256 targetBalanceInUSD = targetValueInt <= 0 ? 0 : uint256(targetValueInt);
+            uint256 targetBalance = tokenValues[i] == 0
+                ? 0
+                : (targetBalanceInUSD * 10 ** 18) / uint256(int256(tokenValues[i]));
             MockERC20(tokens[i]).setBalance(address(this), targetBalance);
         }
+        emit Rebalanced();
     }
 
-    function getTokenPrice(address _token, bytes[] calldata priceUpdate) public payable returns (int64) {
+    function getTokenPrice(address _token) public returns (int64) {
         bytes32 priceFeedId = tokenPriceFeedId[_token];
         if (priceFeedId == bytes32(0)) {
             revert PriceFeedIdNotFound();
         }
 
-        IPyth pyth = IPyth(PYTH_ADDRESS);
-        uint256 fee = pyth.getUpdateFee(priceUpdate);
-        pyth.updatePriceFeeds{value: fee}(priceUpdate);
-        PythStructs.Price memory price = pyth.getPriceNoOlderThan(priceFeedId, 60);
+        PythStructs.Price memory price = IPyth(PYTH_ADDRESS).getPriceNoOlderThan(priceFeedId, 60);
 
         if (price.price == 0) {
             revert PriceNotFound();
@@ -115,17 +118,20 @@ contract Basket is OwnableUpgradeable {
     }
 
     function getBasketValue(
-        bytes[][] calldata priceUpdates
+        bytes[] calldata priceUpdates
     ) public returns (int64 totalValue, int64[] memory tokenValues) {
-        if (priceUpdates.length != tokens.length) {
-            revert ArraysLengthMismatch();
-        }
-
+        updatePriceFeeds(priceUpdates);
         tokenValues = new int64[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            tokenValues[i] = getTokenPrice(tokens[i], priceUpdates[i]);
+            tokenValues[i] = getTokenPrice(tokens[i]);
             totalValue += tokenValues[i];
         }
+    }
+
+    function updatePriceFeeds(bytes[] calldata priceUpdates) public {
+        IPyth pyth = IPyth(PYTH_ADDRESS);
+        uint256 fee = pyth.getUpdateFee(priceUpdates);
+        pyth.updatePriceFeeds{value: fee}(priceUpdates);
     }
 
     /// @notice Allow contract to receive ETH
