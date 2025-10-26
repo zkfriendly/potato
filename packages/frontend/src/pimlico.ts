@@ -5,16 +5,13 @@ import { privateKeyToAccount } from "viem/accounts";
 import { createSmartAccountClient } from "permissionless";
 import { toSafeSmartAccount } from "permissionless/accounts";
 // Avoid subpath import issues: inline the known EntryPoint v0.7 address
-const entryPoint07Address =
-  "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as const;
+const entryPoint07Address = "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as const;
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { PIMLICO_API_KEY } from "./config";
 
 // Contract addresses on Sepolia
-const SETUP_CONTRACT_ADDRESS =
-  "0x27D5ca4840b04Aa0e6B1C7f864C5802307476526" as const;
-const BASKET_FOUNDRY_ADDRESS =
-  "0x268c1dfd21A772D392981E070334C2a5dC3DD539" as const;
+const SETUP_CONTRACT_ADDRESS = "0x6023Fc4c27c96A6e612d970a674A455bB3e32A58" as const;
+const BASKET_FOUNDRY_ADDRESS = "0x7F5256136c384A4Da19B44420e4C98d556a60381" as const;
 
 // Setup contract ABI - including setup and ownerNickname functions
 const SETUP_CONTRACT_ABI = [
@@ -108,9 +105,7 @@ const BASKET_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "bytes[][]", name: "priceUpdates", type: "bytes[][]" },
-    ],
+    inputs: [{ internalType: "bytes[]", name: "priceUpdates", type: "bytes[]" }],
     name: "getBasketValue",
     outputs: [
       { internalType: "int64", name: "totalValue", type: "int64" },
@@ -120,13 +115,10 @@ const BASKET_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "address", name: "_token", type: "address" },
-      { internalType: "bytes[]", name: "priceUpdate", type: "bytes[]" },
-    ],
+    inputs: [{ internalType: "address", name: "_token", type: "address" }],
     name: "getTokenPrice",
     outputs: [{ internalType: "int64", name: "", type: "int64" }],
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -173,9 +165,7 @@ const BASKET_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "bytes[][]", name: "priceUpdates", type: "bytes[][]" },
-    ],
+    inputs: [{ internalType: "bytes[]", name: "priceUpdates", type: "bytes[]" }],
     name: "rebalanceBasket",
     outputs: [],
     stateMutability: "payable",
@@ -198,9 +188,7 @@ const BASKET_ABI = [
   {
     inputs: [{ internalType: "address", name: "token", type: "address" }],
     name: "tokenPriceFeedId",
-    outputs: [
-      { internalType: "bytes32", name: "priceFeedId", type: "bytes32" },
-    ],
+    outputs: [{ internalType: "bytes32", name: "priceFeedId", type: "bytes32" }],
     stateMutability: "view",
     type: "function",
   },
@@ -218,6 +206,14 @@ const BASKET_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
+  {
+    inputs: [{ internalType: "bytes[]", name: "priceUpdates", type: "bytes[]" }],
+    name: "updatePriceFeeds",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  { stateMutability: "payable", type: "receive" },
 ] as const;
 
 // ERC20 ABI (minimal for balance and metadata)
@@ -258,10 +254,7 @@ export async function getPimlicoClients(forceNew = false, nickname?: string) {
   const LS_KEY = "potato:pk";
   let pk: Hex | undefined;
   if (!pk) {
-    const stored =
-      typeof window !== "undefined"
-        ? (localStorage.getItem(LS_KEY) as Hex | null)
-        : null;
+    const stored = typeof window !== "undefined" ? (localStorage.getItem(LS_KEY) as Hex | null) : null;
     if (stored && stored.startsWith("0x") && !forceNew) {
       pk = stored as Hex;
       console.info("[passkey] loaded existing private key from localStorage");
@@ -284,9 +277,7 @@ export async function getPimlicoClients(forceNew = false, nickname?: string) {
 
   const publicClient = createPublicClient({
     chain: sepolia,
-    transport: http(
-      "https://eth-sepolia.g.alchemy.com/v2/alvfYVoqtfz_sWLhV9o9AN0Z9HQyyb3O"
-    ),
+    transport: http("https://eth-sepolia.g.alchemy.com/v2/alvfYVoqtfz_sWLhV9o9AN0Z9HQyyb3O"),
   });
 
   const pimlicoUrl = `https://api.pimlico.io/v2/sepolia/rpc?apikey=${PIMLICO_API_KEY}`;
@@ -329,10 +320,7 @@ export async function getPimlicoClients(forceNew = false, nickname?: string) {
 // 2) Else, create a new passkey (resident credential) and derive from its id.
 // NOTE: This is a demo approach. In production, use a server to manage
 // challenges and consider embedding signing into your AA flow directly.
-async function generatePrivateKeyWithPasskey(
-  forceNew = false,
-  nickname?: string
-): Promise<Hex | undefined> {
+async function generatePrivateKeyWithPasskey(forceNew = false, nickname?: string): Promise<Hex | undefined> {
   try {
     if (!("PublicKeyCredential" in window)) return undefined;
 
@@ -423,9 +411,7 @@ function base64UrlToBytes(b64url: string): Uint8Array {
   return out;
 }
 
-async function recoverCredentialIdWithPasskey(): Promise<
-  Uint8Array | undefined
-> {
+async function recoverCredentialIdWithPasskey(): Promise<Uint8Array | undefined> {
   if (!("PublicKeyCredential" in window)) return undefined;
   const challenge = crypto.getRandomValues(new Uint8Array(32));
   const publicKey: PublicKeyCredentialRequestOptions = {
@@ -445,15 +431,10 @@ async function recoverCredentialIdWithPasskey(): Promise<
 
 async function derivePkFromCredentialId(rawId: Uint8Array): Promise<Hex> {
   // Hash rawId with SHA-256, map into secp256k1 order
-  const digestBuf = await crypto.subtle.digest(
-    "SHA-256",
-    rawId as unknown as BufferSource
-  );
+  const digestBuf = await crypto.subtle.digest("SHA-256", rawId as unknown as BufferSource);
   const digest = new Uint8Array(digestBuf);
   const hex = bytesToHex(digest);
-  const n = BigInt(
-    "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"
-  );
+  const n = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
   let x = BigInt("0x" + hex);
   x = (x % (n - 1n)) + 1n; // in [1, n-1]
   const out = "0x" + x.toString(16).padStart(64, "0");
@@ -472,9 +453,7 @@ export async function getWalletAddress(): Promise<string> {
 }
 
 // Check if a nickname is already set for the wallet address
-export async function getExistingNickname(
-  address?: string
-): Promise<string | null> {
+export async function getExistingNickname(address?: string): Promise<string | null> {
   try {
     const { publicClient, account } = await getPimlicoClients();
     const walletAddress = address || account.address;
@@ -501,15 +480,12 @@ export async function sendSetupTransaction(nickname: string) {
     throw new Error("Nickname cannot be empty");
   }
 
-  const { smartAccountClient, account, publicClient } =
-    await getPimlicoClients();
+  const { smartAccountClient, account, publicClient } = await getPimlicoClients();
 
   // Check if nickname already exists
   const existingNickname = await getExistingNickname(account.address);
   if (existingNickname) {
-    throw new Error(
-      `Nickname already set for this address: ${existingNickname}`
-    );
+    throw new Error(`Nickname already set for this address: ${existingNickname}`);
   }
 
   // Encode the setup function call with wallet address and nickname
@@ -526,9 +502,7 @@ export async function sendSetupTransaction(nickname: string) {
   });
 
   // Log to console so it's easy to inspect
-  console.log(
-    `Setup transaction submitted: https://sepolia.etherscan.io/tx/${txHash}`
-  );
+  console.log(`Setup transaction submitted: https://sepolia.etherscan.io/tx/${txHash}`);
 
   // Wait for transaction receipt to check status
   const receipt = await publicClient.waitForTransactionReceipt({
@@ -538,14 +512,10 @@ export async function sendSetupTransaction(nickname: string) {
   console.log("Transaction receipt:", receipt);
 
   if (receipt.status === "reverted") {
-    throw new Error(
-      `Transaction failed. Check on Etherscan: https://sepolia.etherscan.io/tx/${txHash}`
-    );
+    throw new Error(`Transaction failed. Check on Etherscan: https://sepolia.etherscan.io/tx/${txHash}`);
   }
 
-  console.log(
-    `Setup transaction successful: https://sepolia.etherscan.io/tx/${txHash}`
-  );
+  console.log(`Setup transaction successful: https://sepolia.etherscan.io/tx/${txHash}`);
 
   return txHash;
 }
@@ -588,9 +558,7 @@ export async function getUserBaskets(userAddress?: string): Promise<string[]> {
 }
 
 // Get token info for a basket
-export async function getBasketTokensInfo(
-  basketAddress: string
-): Promise<{ tokens: string[]; percentages: bigint[] }> {
+export async function getBasketTokensInfo(basketAddress: string): Promise<{ tokens: string[]; percentages: bigint[] }> {
   const { publicClient } = await getPimlicoClients();
 
   const result = await publicClient.readContract({
@@ -639,10 +607,7 @@ export async function getTokenMetadata(tokenAddress: string): Promise<{
 }
 
 // Get token balance for a specific holder (basket)
-export async function getTokenBalance(
-  tokenAddress: string,
-  holderAddress: string
-): Promise<bigint> {
+export async function getTokenBalance(tokenAddress: string, holderAddress: string): Promise<bigint> {
   const { publicClient } = await getPimlicoClients();
 
   const balance = await publicClient.readContract({
@@ -677,9 +642,7 @@ export function formatTokenAmount(amount: bigint, decimals: number): string {
 }
 
 // Get complete basket info with token balances
-export async function getBasketInfo(
-  basketAddress: string
-): Promise<BasketInfo> {
+export async function getBasketInfo(basketAddress: string): Promise<BasketInfo> {
   try {
     // Get tokens and percentages
     const { tokens, percentages } = await getBasketTokensInfo(basketAddress);
@@ -715,13 +678,9 @@ export async function getBasketInfo(
 }
 
 // Get all baskets info for a user
-export async function getAllUserBasketsInfo(
-  userAddress?: string
-): Promise<BasketInfo[]> {
+export async function getAllUserBasketsInfo(userAddress?: string): Promise<BasketInfo[]> {
   const baskets = await getUserBaskets(userAddress);
-  const basketInfoPromises = baskets.map((basketAddress) =>
-    getBasketInfo(basketAddress)
-  );
+  const basketInfoPromises = baskets.map((basketAddress) => getBasketInfo(basketAddress));
   return Promise.all(basketInfoPromises);
 }
 
@@ -733,7 +692,7 @@ const PYTH_PRICE_FEED_IDS = {
 };
 
 // Fetch price feed data from Pyth
-export async function fetchPriceFeedData(): Promise<string[][]> {
+export async function fetchPriceFeedData(): Promise<string[]> {
   const ids = Object.values(PYTH_PRICE_FEED_IDS);
   const idsParam = ids.map((id) => `ids[]=${id}`).join("&");
   const url = `https://hermes.pyth.network/v2/updates/price/latest?${idsParam}`;
@@ -753,11 +712,10 @@ export async function fetchPriceFeedData(): Promise<string[][]> {
 
   // Return the binary data as needed for the contract
   // The API returns data.binary.data which is an array of hex strings
-  // We need to wrap each in an array for the bytes[][] type
-  const priceUpdates = data.binary.data.map((hexString: string) => [
-    `0x${hexString}`,
-  ]);
-  console.log("Formatted price updates:", priceUpdates.length, "feeds");
+  // Format: bytes[] - flat array of hex strings with 0x prefix
+  const priceUpdates = data.binary.data.map((hexString: string) => `0x${hexString}`);
+
+  console.log("Formatted price updates:", priceUpdates.length, "price updates");
   return priceUpdates;
 }
 
@@ -782,9 +740,7 @@ async function getPrices(): Promise<Record<string, number>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data.parsed.forEach((priceData: any) => {
     // Normalize the ID (ensure it has 0x prefix)
-    const id = priceData.id.startsWith("0x")
-      ? priceData.id
-      : `0x${priceData.id}`;
+    const id = priceData.id.startsWith("0x") ? priceData.id : `0x${priceData.id}`;
 
     console.log("Processing price feed:", {
       rawId: priceData.id,
@@ -794,9 +750,7 @@ async function getPrices(): Promise<Record<string, number>> {
     });
 
     // Price is in expo format, so we need to apply the exponent
-    const price =
-      Number(priceData.price.price) /
-      Math.pow(10, Math.abs(priceData.price.expo));
+    const price = Number(priceData.price.price) / Math.pow(10, Math.abs(priceData.price.expo));
 
     // Map feed ID to symbol - normalize both sides for comparison
     const btcId = PYTH_PRICE_FEED_IDS.BTC.toLowerCase();
@@ -849,12 +803,7 @@ export async function calculateBasketValue(
 
     const totalValue = tokenValues.reduce((sum, val) => sum + val, 0);
 
-    console.log(
-      "Total basket value:",
-      totalValue,
-      "Token values:",
-      tokenValues
-    );
+    console.log("Total basket value:", totalValue, "Token values:", tokenValues);
     return { totalValue, tokenValues };
   } catch (error) {
     console.error("Error calculating basket value:", error);
@@ -867,47 +816,69 @@ export async function rebalanceBasket(basketAddress: string): Promise<string> {
   console.log("🔄 Starting rebalance for basket:", basketAddress);
 
   try {
-    const { smartAccountClient, publicClient } = await getPimlicoClients();
+    const { smartAccountClient } = await getPimlicoClients();
     console.log("✅ Got Pimlico clients");
 
-    const priceUpdates = await fetchPriceFeedData();
-    console.log("✅ Got price feed data:", priceUpdates.length, "feeds");
+    // First check if basket has any tokens
+    console.log("🔍 Checking basket token balances...");
+    const basketInfo = await getBasketInfo(basketAddress);
+    const hasBalance = basketInfo.tokens.some((token) => token.balance > 0n);
 
-    console.log("📤 Sending rebalance transaction...");
-    const txHash = await smartAccountClient.sendTransaction({
-      to: basketAddress as `0x${string}`,
-      value: 0n,
-      data: encodeFunctionData({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        abi: BASKET_ABI as any,
-        functionName: "rebalanceBasket",
-        args: [priceUpdates],
-      }),
-    });
-
-    console.log("✅ Rebalance transaction sent:", txHash);
-    console.log(
-      "🔗 View on Etherscan:",
-      `https://sepolia.etherscan.io/tx/${txHash}`
-    );
-
-    console.log("⏳ Waiting for transaction confirmation...");
-    // Wait for transaction receipt
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash: txHash,
-    });
-
-    console.log("✅ Transaction confirmed:", receipt);
-
-    if (receipt.status === "reverted") {
+    if (!hasBalance) {
       throw new Error(
-        `Rebalance failed. Check on Etherscan: https://sepolia.etherscan.io/tx/${txHash}`
+        `❌ Cannot rebalance empty basket!\n\n` +
+          `Your basket has no tokens. Please deposit tokens to your basket endpoint first.\n\n` +
+          `Token balances:\n` +
+          basketInfo.tokens.map((t) => `  • ${t.symbol}: ${t.formattedBalance}`).join("\n")
       );
     }
 
+    console.log("✅ Basket has tokens:", basketInfo.tokens.map((t) => `${t.symbol}: ${t.formattedBalance}`).join(", "));
+
+    const priceUpdates = await fetchPriceFeedData();
+    console.log("✅ Got price feed data:", priceUpdates.length, "price updates");
+    console.log("📊 Price updates (bytes[]):");
+    priceUpdates.forEach((p, i) => {
+      console.log(`  [${i}]: ${p.slice(0, 30)}...${p.slice(-20)} (${p.length} chars total)`);
+    });
+
+    // Encode the function call data
+    const callData = encodeFunctionData({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      abi: BASKET_ABI as any,
+      functionName: "rebalanceBasket",
+      args: [priceUpdates],
+    });
+
+    console.log("📦 Encoded calldata:");
+    console.log("  Function selector:", callData.slice(0, 10));
+    console.log("  Full calldata length:", callData.length, "chars");
+    console.log("  First 100 chars:", callData.slice(0, 100));
     console.log(
-      `🎉 Rebalance successful: https://sepolia.etherscan.io/tx/${txHash}`
+      "  Args being sent:",
+      JSON.stringify({ priceUpdates: priceUpdates.map((p) => `${p.slice(0, 20)}...`) })
     );
+
+    console.log("📤 Sending rebalance transaction...");
+    console.log("  To:", basketAddress);
+    console.log("  Value: 0 ETH (no fee required)");
+
+    const txHash = await smartAccountClient.sendTransaction({
+      to: basketAddress as `0x${string}`,
+      value: 0n, // No ETH needed - contract handles fees internally
+      data: callData,
+    });
+
+    console.log("✅ Rebalance transaction sent:", txHash);
+    console.log("🔗 View on Etherscan:", `https://sepolia.etherscan.io/tx/${txHash}`);
+
+    // Return immediately without waiting for confirmation
+    // This allows the transaction to be submitted and debugged on-chain even if it fails
+    console.log("⚠️ Transaction submitted - check Etherscan to see if it succeeds or reverts");
+    console.log(`📝 Debug URL: https://sepolia.etherscan.io/tx/${txHash}`);
+
+    // Note: We no longer wait for confirmation here, so the transaction can be debugged on-chain
+    // If you want to check the status, look at the Etherscan link
 
     return txHash;
   } catch (error) {
