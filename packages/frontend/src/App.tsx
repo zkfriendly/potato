@@ -1,11 +1,15 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PotatoDancer from "./components/PotatoDancer";
 import InvestingBars from "./components/InvestingBars";
 import TopBaskets from "./components/TopBaskets";
 import CreateProfile from "./CreateProfile";
 import Profile from "./Profile";
-import { getPimlicoClients, checkPasskeyAvailability } from "./pimlico";
+import {
+  getPimlicoClients,
+  checkPasskeyAvailability,
+  getExistingNickname,
+} from "./pimlico";
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,30 +17,109 @@ function App() {
   const [walletReady, setWalletReady] = useState(false);
   const [showPasskeyChoice, setShowPasskeyChoice] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showNicknameFirst, setShowNicknameFirst] = useState(false);
+  const [pendingNickname, setPendingNickname] = useState<string>("");
+  const [setupStatus, setSetupStatus] = useState<string>("");
+
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    async function checkExistingAuth() {
+      try {
+        const hasPrivateKey = localStorage.getItem("potato:pk");
+        if (hasPrivateKey) {
+          // User has a key, check if they have a nickname
+          const { account } = await getPimlicoClients();
+          const nickname = await getExistingNickname(account.address);
+          if (nickname) {
+            // User is fully set up, show profile
+            setShowProfile(true);
+          } else {
+            // User has key but no nickname - clear everything so they can start fresh
+            console.log("No nickname found, clearing stored credentials");
+            localStorage.removeItem("potato:pk");
+            localStorage.removeItem("potato:cred");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking existing auth:", error);
+        // On error, also clear credentials to allow fresh start
+        localStorage.removeItem("potato:pk");
+        localStorage.removeItem("potato:cred");
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    }
+    checkExistingAuth();
+  }, []);
 
   const handleSetupClick = async () => {
     const hasExistingKey = localStorage.getItem("potato:pk");
     const hasPasskeys = await checkPasskeyAvailability();
 
-    // If no existing key and passkeys are available, show choice
-    if (!hasExistingKey && hasPasskeys) {
+    // Always show passkey choice first if passkeys are available
+    if (hasPasskeys) {
       setShowPasskeyChoice(true);
-    } else {
-      // Direct authenticate with existing or create new
+    } else if (hasExistingKey) {
+      // Has key but no passkey support
       await authenticateWithPasskey(false);
+    } else {
+      // No key, no passkey support - ask for nickname and create
+      setShowNicknameFirst(true);
     }
+  };
+
+  const handlePasskeyChoice = async (useExisting: boolean) => {
+    if (useExisting) {
+      // Use existing passkey - authenticate and check nickname
+      await authenticateWithPasskey(false);
+    } else {
+      // Create new passkey - ask for nickname first
+      setShowPasskeyChoice(false);
+      setShowNicknameFirst(true);
+    }
+  };
+
+  const handleNicknameSubmit = async (nickname: string) => {
+    setPendingNickname(nickname);
+    setShowNicknameFirst(false);
+
+    // Now create the passkey with the nickname
+    await authenticateWithPasskey(true);
   };
 
   const authenticateWithPasskey = async (forceNew: boolean) => {
     setIsAuthenticating(true);
     setShowPasskeyChoice(false);
     try {
-      // Initialize passkey and wallet
-      await getPimlicoClients(forceNew);
-      setWalletReady(true);
-      setIsModalOpen(true);
+      // Initialize passkey and wallet - pass nickname for new users
+      setSetupStatus("Creating your wallet...");
+      const nicknameToUse =
+        forceNew && pendingNickname ? pendingNickname : undefined;
+      await getPimlicoClients(forceNew, nicknameToUse);
+
+      // If we just created a new passkey with a nickname, send setup transaction automatically
+      if (forceNew && pendingNickname) {
+        setSetupStatus("Sending setup transaction...");
+        const { sendSetupTransaction } = await import("./pimlico");
+        const hash = await sendSetupTransaction(pendingNickname);
+        console.log("Setup transaction sent:", hash);
+        setSetupStatus("Setup complete! Redirecting...");
+        setPendingNickname(""); // Clear pending nickname
+        // Navigate to profile after successful setup
+        setTimeout(() => {
+          setShowProfile(true);
+          setSetupStatus("");
+        }, 1000);
+      } else {
+        // Existing passkey or no nickname - show modal to check/set nickname
+        setWalletReady(true);
+        setIsModalOpen(true);
+        setSetupStatus("");
+      }
     } catch (error) {
       console.log("Passkey authentication cancelled or failed:", error);
+      setSetupStatus("");
       // Only show alert for non-cancellation/timeout errors
       const isCancellation =
         error instanceof Error &&
@@ -53,9 +136,20 @@ function App() {
     }
   };
 
+  // Show loading while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="landing">
+        <div className="profile-header">
+          <h1>Loading... 🥔</h1>
+        </div>
+      </div>
+    );
+  }
+
   // Show profile page if setup is complete
   if (showProfile) {
-    return <Profile />;
+    return <Profile onLogout={() => setShowProfile(false)} />;
   }
 
   return (
@@ -151,6 +245,80 @@ function App() {
         <span>© {new Date().getFullYear()} Potato finance</span>
       </footer>
 
+      {/* Setup Status Modal */}
+      {setupStatus && (
+        <div className="modal-overlay">
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <section className="create-profile">
+              <h2>Setting up your account 🥔</h2>
+              <p className="hint" style={{ fontSize: "18px", fontWeight: 600 }}>
+                {setupStatus}
+              </p>
+            </section>
+          </div>
+        </div>
+      )}
+
+      {/* Nickname First Modal */}
+      {showNicknameFirst && !setupStatus && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowNicknameFirst(false)}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="modal-close"
+              onClick={() => setShowNicknameFirst(false)}
+            >
+              ×
+            </button>
+            <section className="create-profile">
+              <h2>Choose your nickname 🥔</h2>
+              <p className="hint">
+                First, pick a nickname for your Potato profile. This will be
+                used to create your personal endpoints and will be saved with
+                your passkey.
+              </p>
+              <label>
+                <input
+                  type="text"
+                  placeholder="e.g. zkfriendly"
+                  value={pendingNickname}
+                  onChange={(e) =>
+                    setPendingNickname(
+                      e.target.value.replace(/[^a-zA-Z0-9-_]/g, "")
+                    )
+                  }
+                />
+              </label>
+              <div className="ens-preview">
+                Your endpoints:{" "}
+                <strong>
+                  {pendingNickname
+                    ? `${pendingNickname.toLowerCase()}.cc.pyusd.eth`
+                    : "<nickname>.cc.pyusd.eth"}
+                </strong>
+              </div>
+              <div className="card-actions">
+                <button
+                  className="btn primary"
+                  disabled={!pendingNickname.trim()}
+                  onClick={() => handleNicknameSubmit(pendingNickname)}
+                >
+                  Continue
+                </button>
+                <button
+                  className="btn ghost"
+                  onClick={() => setShowNicknameFirst(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      )}
+
       {/* Passkey Choice Modal */}
       {showPasskeyChoice && (
         <div
@@ -175,14 +343,14 @@ function App() {
               >
                 <button
                   className="btn primary"
-                  onClick={() => authenticateWithPasskey(false)}
+                  onClick={() => handlePasskeyChoice(true)}
                   disabled={isAuthenticating}
                 >
                   Use existing passkey
                 </button>
                 <button
                   className="btn ghost"
-                  onClick={() => authenticateWithPasskey(true)}
+                  onClick={() => handlePasskeyChoice(false)}
                   disabled={isAuthenticating}
                 >
                   Create new passkey
@@ -204,9 +372,11 @@ function App() {
               ×
             </button>
             <CreateProfile
+              initialNickname={pendingNickname}
               onComplete={(hash) => {
                 setIsModalOpen(false);
                 setWalletReady(false);
+                setPendingNickname(""); // Clear pending nickname
                 // Navigate to profile page after setup
                 if (hash && hash !== "existing") {
                   // Small delay to show completion before navigating

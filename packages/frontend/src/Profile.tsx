@@ -6,6 +6,10 @@ import {
   type BasketInfo,
 } from "./pimlico";
 
+type ProfileProps = {
+  onLogout?: () => void;
+};
+
 // Supported baskets (same as landing page)
 const SUPPORTED_BASKETS = [
   {
@@ -40,7 +44,7 @@ const ASSET_COLORS: Record<string, string> = {
 };
 
 // Helper function to determine basket type based on token configuration
-function getBasketType(tokens: BasketInfo["tokens"]): string | null {
+function getBasketType(tokens: BasketInfo["tokens"]): string {
   // Sort tokens by percentage to normalize comparison
   const config = tokens
     .map((t) => ({
@@ -65,20 +69,14 @@ function getBasketType(tokens: BasketInfo["tokens"]): string | null {
     }
   }
 
-  // Check for Balanced Blue: 50% ETH, 50% BTC
+  // Check for Balanced Blue: 50% ETH, 50% BTC (or any 2-token basket)
+  // Default to Balanced Blue for 2-token baskets
   if (config.length === 2) {
-    const hasBTC50 = config.some(
-      (c) => c.symbol.includes("BTC") && c.pct === 50
-    );
-    const hasETH50 = config.some(
-      (c) => c.symbol.includes("ETH") && c.pct === 50
-    );
-    if (hasBTC50 && hasETH50) {
-      return "Balanced Blue";
-    }
+    return "Balanced Blue";
   }
 
-  return null;
+  // Default to Balanced Blue if unknown
+  return "Balanced Blue";
 }
 
 function AssetIcon({ asset }: { asset: string }) {
@@ -150,7 +148,7 @@ function AssetIcon({ asset }: { asset: string }) {
   );
 }
 
-export default function Profile() {
+export default function Profile({ onLogout }: ProfileProps) {
   const [nickname, setNickname] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [userBaskets, setUserBaskets] = useState<BasketInfo[]>([]);
@@ -205,17 +203,63 @@ export default function Profile() {
     );
   }
 
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to logout?")) {
+      // Clear authentication data
+      localStorage.removeItem("potato:pk");
+      localStorage.removeItem("potato:cred");
+      // Call parent logout handler
+      if (onLogout) {
+        onLogout();
+      }
+    }
+  };
+
   return (
     <div className="profile-page">
       {/* Profile Header */}
       <div className="profile-header">
+        <button className="logout-btn" onClick={handleLogout} title="Logout">
+          🚪 Logout
+        </button>
         <div className="profile-info">
-          <h1>🥔 {nickname || "Potato User"}</h1>
+          <div className="greeting">
+            {getGreeting()},{" "}
+            <span className="nickname-highlight">{nickname}</span>! 🥔
+          </div>
+          <p className="welcome-text">
+            Welcome to your Potato Finance dashboard
+          </p>
           <p className="wallet-address">
-            {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+            Wallet: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
           </p>
         </div>
       </div>
+
+      {/* Deposit Instructions */}
+      <section className="deposit-instructions">
+        <div className="instruction-card">
+          <h3>💰 How to Deposit</h3>
+          <p className="instruction-text">
+            Send any supported token directly to your basket endpoint below.
+            Your basket will automatically rebalance to maintain your target
+            allocations.
+          </p>
+          <div className="pyusd-highlight">
+            <strong>💙 PayPal Users:</strong> You can easily send PYUSD directly
+            from your PayPal app! Just copy the ENS address from your basket and
+            use it as the recipient address.
+          </div>
+        </div>
+      </section>
 
       {/* User Baskets Section */}
       <section className="profile-section">
@@ -251,13 +295,26 @@ export default function Profile() {
               return (
                 <article key={basket.address} className="user-basket-card">
                   <div className="card-head">
-                    <div>
-                      <h3>{basketType || "Custom Basket"}</h3>
+                    <div className="basket-header-info">
+                      <h3>{basketType}</h3>
                       {endpoint && (
-                        <p className="basket-endpoint">{endpoint}</p>
+                        <div className="basket-endpoint-container">
+                          <span className="endpoint-label">Send to:</span>
+                          <div className="basket-endpoint">{endpoint}</div>
+                          <button
+                            className="copy-btn"
+                            onClick={() => {
+                              navigator.clipboard.writeText(endpoint);
+                              alert("ENS address copied!");
+                            }}
+                            title="Copy address"
+                          >
+                            📋 Copy
+                          </button>
+                        </div>
                       )}
                       <p className="basket-address">
-                        {basket.address.slice(0, 6)}...
+                        Contract: {basket.address.slice(0, 6)}...
                         {basket.address.slice(-4)}
                       </p>
                     </div>

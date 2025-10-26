@@ -101,7 +101,7 @@ const ERC20_ABI = [
   },
 ] as const;
 
-export async function getPimlicoClients(forceNew = false) {
+export async function getPimlicoClients(forceNew = false, nickname?: string) {
   if (!PIMLICO_API_KEY) throw new Error("Missing PIMLICO_API_KEY");
 
   const LS_KEY = "potato:pk";
@@ -117,7 +117,7 @@ export async function getPimlicoClients(forceNew = false) {
     } else {
       // Try passkey-backed key derivation
       // Any errors thrown here should bubble up
-      pk = await generatePrivateKeyWithPasskey(forceNew);
+      pk = await generatePrivateKeyWithPasskey(forceNew, nickname);
       if (!pk) {
         throw new Error("Passkey authentication was cancelled or failed");
       }
@@ -179,7 +179,8 @@ export async function getPimlicoClients(forceNew = false) {
 // NOTE: This is a demo approach. In production, use a server to manage
 // challenges and consider embedding signing into your AA flow directly.
 async function generatePrivateKeyWithPasskey(
-  forceNew = false
+  forceNew = false,
+  nickname?: string
 ): Promise<Hex | undefined> {
   try {
     if (!("PublicKeyCredential" in window)) return undefined;
@@ -211,10 +212,15 @@ async function generatePrivateKeyWithPasskey(
     const rpId = location.hostname;
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     const userId = crypto.getRandomValues(new Uint8Array(32));
+
+    // Use nickname if provided, otherwise use default
+    const userName = nickname || "potato-user";
+    const displayName = nickname ? `${nickname} (Potato)` : "Potato User";
+
     const publicKey: PublicKeyCredentialCreationOptions = {
       challenge,
       rp: { name: "Potato Finance", id: rpId },
-      user: { id: userId, name: "potato-user", displayName: "Potato User" },
+      user: { id: userId, name: userName, displayName: displayName },
       pubKeyCredParams: [{ type: "public-key", alg: -7 }], // ES256
       authenticatorSelection: {
         authenticatorAttachment: "platform",

@@ -7,10 +7,14 @@ import {
 
 type CreateProfileProps = {
   onComplete?: (hash: string) => void;
+  initialNickname?: string;
 };
 
-export default function CreateProfile({ onComplete }: CreateProfileProps) {
-  const [nick, setNick] = useState("");
+export default function CreateProfile({
+  onComplete,
+  initialNickname = "",
+}: CreateProfileProps) {
+  const [nick, setNick] = useState(initialNickname);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [existingNickname, setExistingNickname] = useState<string | null>(null);
@@ -90,8 +94,9 @@ export default function CreateProfile({ onComplete }: CreateProfileProps) {
     <section className="create-profile">
       <h2>Wallet authenticated! 🥔</h2>
       <p className="hint">
-        Choose a nickname for your Potato profile. It'll become your personal
-        endpoint to easily invest by sending PYUSD to it.
+        {initialNickname
+          ? "Confirm your nickname to complete setup."
+          : "Choose a nickname for your Potato profile. It'll become your personal endpoint to easily invest by sending PYUSD to it."}
       </p>
       <label>
         <input
@@ -101,10 +106,17 @@ export default function CreateProfile({ onComplete }: CreateProfileProps) {
           onChange={(e) =>
             setNick(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ""))
           }
+          disabled={!!initialNickname}
+          readOnly={!!initialNickname}
         />
       </label>
       <div className="ens-preview">
-        Your endpoint: <strong>{ens || "<nickname>.pyusd.eth"}</strong>
+        Your endpoints:{" "}
+        <strong>
+          {ens
+            ? `${ens.replace(".pyusd.eth", "")}.cc.pyusd.eth`
+            : "<nickname>.cc.pyusd.eth"}
+        </strong>
       </div>
       <div className="card-actions">
         <button
