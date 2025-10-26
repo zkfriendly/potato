@@ -49,8 +49,22 @@ const config: HardhatUserConfig = {
       accounts: [configVariable("HEDERA_PRIVATE_KEY")],
     },
   },
-  etherscan: {
-    apiKey: configVariable("ETHERSCAN_API_KEY"),
+  chainDescriptors: {
+    11155111: {
+      name: "Sepolia",
+      blockExplorers: {
+        etherscan: {
+          name: "Sepolia Etherscan",
+          url: "https://sepolia.etherscan.io/",
+          apiUrl: "https://api.etherscan.io/v2/api",
+        },
+      },
+    },
+  },
+  verify: {
+    etherscan: {
+      apiKey: configVariable("ETHERSCAN_API_KEY"),
+    },
   },
 } as any;
 
