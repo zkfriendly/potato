@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import {MockERC20} from "./mock/erc20.sol";
@@ -10,7 +10,7 @@ import {MockERC20} from "./mock/erc20.sol";
  * @title Basket
  * @notice A basket of tokens with a given percentage and amount
  */
-contract Basket is Ownable {
+contract Basket is OwnableUpgradeable {
     address public constant PYTH_ADDRESS = 0xDd24F84d36BF92C65F92307595335bdFab5Bbd21;
 
     address[] public tokens;
@@ -23,12 +23,18 @@ contract Basket is Ownable {
     error PriceNotFound();
     error TotalValueIsZero();
 
-    constructor(
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         address _owner,
         address[] memory _tokens,
         uint256[] memory _percentages,
         bytes32[] memory _priceFeedIds
-    ) Ownable(_owner) {
+    ) public initializer {
+        __Ownable_init(_owner);
         if (_tokens.length != _percentages.length || _tokens.length != _priceFeedIds.length) {
             revert ArraysLengthMismatch();
         }

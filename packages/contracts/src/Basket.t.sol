@@ -3,12 +3,14 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {Basket} from "./Basket.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import {MockERC20} from "./mock/erc20.sol";
 
 contract BasketTest is Test {
     Basket basket;
+    address basketImplementation;
 
     address BTC_TOKEN = makeAddr("BTC");
     address ETH_TOKEN = makeAddr("ETH");
@@ -19,6 +21,7 @@ contract BasketTest is Test {
     mapping(address token => bytes32 priceFeedId) public prices;
 
     function setUp() public {
+        basketImplementation = address(new Basket());
         address[] memory tokens = new address[](2);
         tokens[0] = BTC_TOKEN;
         tokens[1] = ETH_TOKEN;
@@ -34,7 +37,9 @@ contract BasketTest is Test {
         percentages[0] = 50;
         percentages[1] = 50;
 
-        basket = new Basket(makeAddr("owner"), tokens, percentages, priceFeedIds);
+        address clone = Clones.clone(basketImplementation);
+        basket = Basket(clone);
+        basket.initialize(makeAddr("owner"), tokens, percentages, priceFeedIds);
     }
 
     function test_getTokensLength() public view {
@@ -93,8 +98,10 @@ contract BasketTest is Test {
         priceFeedIds[0] = BTC_PRICE_FEED_ID;
         priceFeedIds[1] = ETH_PRICE_FEED_ID;
 
-        // Reassign the basket under test
-        basket = new Basket(makeAddr("owner2"), tokens, percentages, priceFeedIds);
+        // Reassign the basket under test using a new clone
+        address clone = Clones.clone(basketImplementation);
+        basket = Basket(clone);
+        basket.initialize(makeAddr("owner2"), tokens, percentages, priceFeedIds);
 
         // Map token addresses to their feed ids for mocking
         prices[address(btc)] = BTC_PRICE_FEED_ID;
