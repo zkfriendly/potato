@@ -24,15 +24,18 @@ contract PotatoFinanceEntrypoint {
     bytes32 public constant BB_NODE = 0xadf72035e25005d63d90e79517a435cb45f0df4f8d94e8f019917ebc1713bf36; // namehash(bb.pyusd.eth).
     bytes32 public constant CC_NODE = 0xffeb03935f6d775b6763946a48527f1e4b15504ed848ce137f59c07a4d964df9; // namehash(cc.pyusd.eth).
 
-    address public constant BTC_TOKEN = 0x29f2D40B0605204364af54EC677bD022dA425d03; // 8 decimals
-    address public constant ETH_TOKEN = 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14; // 18 decimals
-    address public PYUSD_TOKEN = 0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9; // 6 decimals
+    address public constant BTC_TOKEN = 0xE7dC4769C8EaE12954A3b2Dd3089dB7265aE3473;
+    address public constant ETH_TOKEN = 0xF38abcb54c1589C90db6D6E5ec08de22cD5146FE;
+    address public PYUSD_TOKEN = 0x87fa0A06121eA340078F5e5661e70fbF7bdBf809;
 
     bytes32 public constant BTC_PRICE_FEED_ID = 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43;
     bytes32 public constant ETH_PRICE_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     bytes32 public constant PYUSD_PRICE_FEED_ID = 0xc1da1b73d7f01e7ddd54b3766cf7fcd644395ad14f70aa706ec5384c59e76692;
 
     BasketFoundry public basketFoundry;
+
+    mapping(address owner => string nickname) public ownerNickname;
+    mapping(string nickname => address owner) public nicknameOwner;
 
     constructor() {
         basketFoundry = new BasketFoundry();
@@ -52,6 +55,11 @@ contract PotatoFinanceEntrypoint {
     }
 
     function setup(address _owner, string memory _nickname) external {
+        if (keccak256(abi.encodePacked(ownerNickname[_owner])) != keccak256(abi.encodePacked(""))) {
+            // revert OwnerAlreadySetup(); don't revert for demo
+        }
+        ownerNickname[_owner] = _nickname;
+        nicknameOwner[_nickname] = _owner;
         (address bbBasket, address ccBasket) = createBBandCCBaskets(_owner);
         ENS ens = ENS(REGISTRY);
         bytes32 label = keccak256(abi.encodePacked(_nickname));

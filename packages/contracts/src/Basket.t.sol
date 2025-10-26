@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {Basket} from "./Basket.sol";
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
+import {MockERC20} from "./mock/erc20.sol";
 
 contract BasketTest is Test {
     Basket basket;
@@ -48,8 +49,7 @@ contract BasketTest is Test {
     }
 
     function test_getTokensInfo() public {
-        (address[] memory _tokens, uint256[] memory _percentages) = basket
-            .getTokensInfo();
+        (address[] memory _tokens, uint256[] memory _percentages) = basket.getTokensInfo();
         assertEq(_tokens[0], makeAddr("BTC"));
         assertEq(_tokens[1], makeAddr("ETH"));
         assertEq(_percentages[0], 50);
@@ -59,7 +59,7 @@ contract BasketTest is Test {
     function test_getTokenPrice() public {
         bytes[] memory priceUpdates = getPriceUpdates();
         mockGetTokenPrice(BTC_TOKEN, 0.001 ether, priceUpdates);
-        int64 price = basket.getTokenPrice{ value: 0.001 ether }(BTC_TOKEN, priceUpdates);
+        int64 price = basket.getTokenPrice{value: 0.001 ether}(BTC_TOKEN, priceUpdates);
         assertEq(price, 0.001 ether);
     }
 
@@ -69,8 +69,52 @@ contract BasketTest is Test {
         priceUpdates[1] = getPriceUpdates();
         mockGetTokenPrice(BTC_TOKEN, 0.001 ether, priceUpdates[0]);
         mockGetTokenPrice(ETH_TOKEN, 0.002 ether, priceUpdates[1]);
-        int64 value = basket.getBasketValue(priceUpdates);
+        (int64 value, int64[] memory tokenValues) = basket.getBasketValue(priceUpdates);
         assertEq(value, 0.003 ether);
+        assertEq(tokenValues[0], 0.001 ether);
+        assertEq(tokenValues[1], 0.002 ether);
+    }
+
+    function test_rebalanceBasket_setsBalancesToTarget() public {
+        // Deploy mock tokens
+        MockERC20 btc = new MockERC20("BTC", "BTC");
+        MockERC20 eth = new MockERC20("ETH", "ETH");
+
+        // Prepare a new basket with real token contracts
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(btc);
+        tokens[1] = address(eth);
+
+        uint256[] memory percentages = new uint256[](2);
+        percentages[0] = 50;
+        percentages[1] = 50;
+
+        bytes32[] memory priceFeedIds = new bytes32[](2);
+        priceFeedIds[0] = BTC_PRICE_FEED_ID;
+        priceFeedIds[1] = ETH_PRICE_FEED_ID;
+
+        // Reassign the basket under test
+        basket = new Basket(makeAddr("owner2"), tokens, percentages, priceFeedIds);
+
+        // Map token addresses to their feed ids for mocking
+        prices[address(btc)] = BTC_PRICE_FEED_ID;
+        prices[address(eth)] = ETH_PRICE_FEED_ID;
+
+        // Mock Pyth responses
+        bytes[][] memory priceUpdates = new bytes[][](2);
+        priceUpdates[0] = getPriceUpdates();
+        priceUpdates[1] = getPriceUpdates();
+
+        // Set BTC price to 1 ether and ETH price to 3 ether -> total 4 ether, targets 2 ether each
+        mockGetTokenPrice(address(btc), int64(int256(1 ether)), priceUpdates[0]);
+        mockGetTokenPrice(address(eth), int64(int256(3 ether)), priceUpdates[1]);
+
+        // Fund the basket to pay Pyth update fees (0.001 ether per token in mocks)
+        basket.rebalanceBasket{value: 0.002 ether}(priceUpdates);
+
+        // Assert balances set to 50/50 target
+        assertEq(btc.balanceOf(address(basket)), 2 ether);
+        assertEq(eth.balanceOf(address(basket)), 2 ether);
     }
 
     function getPriceUpdates() public view returns (bytes[] memory) {
@@ -93,7 +137,7 @@ contract BasketTest is Test {
         vm.mockCall(
             address(IPyth(basket.PYTH_ADDRESS())),
             abi.encodeWithSelector(IPyth.getPriceNoOlderThan.selector, prices[_token], 60),
-            abi.encode(PythStructs.Price(_price, 0.1 ether, 18, block.timestamp))
+            abi.encode(PythStructs.Price(_price, 0.1 ether, -18, block.timestamp))
         );
     }
 }

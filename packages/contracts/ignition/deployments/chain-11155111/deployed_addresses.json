@@ -1,3 +1,6 @@
 {
-  "PotatoFinanceEntrypointModule#PotatoFinanceEntrypoint": "0x9dcfffE0F3b83D11336A85739afe99683911eAA3"
+  "PotatoFinanceEntrypointModule#PotatoFinanceEntrypoint": "0x9dcfffE0F3b83D11336A85739afe99683911eAA3",
+  "MockTokensModule#PYUSD": "0x87fa0A06121eA340078F5e5661e70fbF7bdBf809",
+  "MockTokensModule#WBTC": "0xE7dC4769C8EaE12954A3b2Dd3089dB7265aE3473",
+  "MockTokensModule#WETH": "0xF38abcb54c1589C90db6D6E5ec08de22cD5146FE"
 }

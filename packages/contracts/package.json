@@ -17,5 +17,8 @@
     "@openzeppelin/contracts": "^5.4.0",
     "@pythnetwork/pyth-sdk-solidity": "^4.2.0",
     "dotenv": "^17.2.3"
+  },
+  "scripts": {
+    "verify:mock-tokens": "bun hardhat run scripts/verify-mock-tokens.ts --network sepolia"
   }
 }

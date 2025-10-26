@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract MockERC20 is ERC20 {
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
+        _mint(msg.sender, 1000000000000000000000000);
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 18;
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+
+    function setBalance(address account, uint256 amount) public {
+        uint256 currentBalance = balanceOf(account);
+        if (amount > currentBalance) {
+            _mint(account, amount - currentBalance);
+        } else if (amount < currentBalance) {
+            _burn(account, currentBalance - amount);
+        }
+        // if amount == currentBalance, do nothing
+    }
+}
