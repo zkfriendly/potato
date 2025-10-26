@@ -2,10 +2,10 @@ import type { HardhatUserConfig } from "hardhat/config";
 
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable } from "hardhat/config";
-import "@nomicfoundation/hardhat-verify";
+import hardhatVerify from "@nomicfoundation/hardhat-verify";
 
 const config: HardhatUserConfig = {
-  plugins: [hardhatToolboxViemPlugin],
+  plugins: [hardhatToolboxViemPlugin, hardhatVerify],
   paths: {
     sources: "src",
   },
@@ -48,9 +48,23 @@ const config: HardhatUserConfig = {
       ]
     },
   },
-  etherscan: {
-    apiKey: configVariable("ETHERSCAN_API_KEY"),
-  }
-} as any;
+  chainDescriptors: {
+    11155111: {
+      name: "Sepolia",
+      blockExplorers: {
+        etherscan: {
+          name: "Sepolia Etherscan",
+          url: "https://sepolia.etherscan.io/",
+          apiUrl: "https://api.etherscan.io/v2/api"
+        },
+      },
+    },
+  },
+  verify: {
+    etherscan: {
+      apiKey: configVariable("ETHERSCAN_API_KEY")
+    },
+  },
+};
 
 export default config;
