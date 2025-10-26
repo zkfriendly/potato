@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, encodeFunctionData } from "viem";
 import { sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { createSmartAccountClient } from "permissionless";
@@ -9,6 +9,31 @@ const entryPoint07Address =
   "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as const;
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { PIMLICO_API_KEY } from "./config";
+
+// Setup contract address on Sepolia
+const SETUP_CONTRACT_ADDRESS =
+  "0x27D5ca4840b04Aa0e6B1C7f864C5802307476526" as const;
+
+// Setup contract ABI - including setup and ownerNickname functions
+const SETUP_CONTRACT_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "_owner", type: "address" },
+      { internalType: "string", name: "_nickname", type: "string" },
+    ],
+    name: "setup",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "owner", type: "address" }],
+    name: "ownerNickname",
+    outputs: [{ internalType: "string", name: "nickname", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
 
 export async function getPimlicoClients(forceNew = false) {
   if (!PIMLICO_API_KEY) throw new Error("Missing PIMLICO_API_KEY");
@@ -215,16 +240,87 @@ function bytesToHex(bytes: Uint8Array): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function sendExampleGaslessTx() {
-  const { smartAccountClient } = await getPimlicoClients();
-  const txHash = await smartAccountClient.sendTransaction({
-    to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
-    value: 0n,
-    data: "0x1234",
+// Get the current wallet address
+export async function getWalletAddress(): Promise<string> {
+  const { account } = await getPimlicoClients();
+  return account.address;
+}
+
+// Check if a nickname is already set for the wallet address
+export async function getExistingNickname(
+  address?: string
+): Promise<string | null> {
+  try {
+    const { publicClient, account } = await getPimlicoClients();
+    const walletAddress = address || account.address;
+
+    const result = await publicClient.readContract({
+      address: SETUP_CONTRACT_ADDRESS,
+      abi: SETUP_CONTRACT_ABI,
+      functionName: "ownerNickname",
+      args: [walletAddress as `0x${string}`],
+    });
+
+    // If nickname is empty string, return null
+    return result && result.length > 0 ? result : null;
+  } catch (error) {
+    console.error("Error fetching existing nickname:", error);
+    return null;
+  }
+}
+
+export async function sendSetupTransaction(nickname: string) {
+  // Validate nickname is not empty
+  const trimmedNickname = nickname.trim();
+  if (!trimmedNickname) {
+    throw new Error("Nickname cannot be empty");
+  }
+
+  const { smartAccountClient, account, publicClient } =
+    await getPimlicoClients();
+
+  // Check if nickname already exists
+  const existingNickname = await getExistingNickname(account.address);
+  if (existingNickname) {
+    throw new Error(
+      `Nickname already set for this address: ${existingNickname}`
+    );
+  }
+
+  // Encode the setup function call with wallet address and nickname
+  const data = encodeFunctionData({
+    abi: SETUP_CONTRACT_ABI,
+    functionName: "setup",
+    args: [account.address, trimmedNickname],
   });
-  // Log to console so it’s easy to inspect
+
+  const txHash = await smartAccountClient.sendTransaction({
+    to: SETUP_CONTRACT_ADDRESS,
+    value: 0n,
+    data,
+  });
+
+  // Log to console so it's easy to inspect
   console.log(
-    `User operation included: https://sepolia.etherscan.io/tx/${txHash}`
+    `Setup transaction submitted: https://sepolia.etherscan.io/tx/${txHash}`
   );
+
+  // Wait for transaction receipt to check status
+  const receipt = await publicClient.waitForTransactionReceipt({
+    hash: txHash,
+  });
+
+  console.log("Transaction receipt:", receipt);
+
+  if (receipt.status === "reverted") {
+    throw new Error(
+      `Transaction failed. Check on Etherscan: https://sepolia.etherscan.io/tx/${txHash}`
+    );
+  }
+
+  console.log(
+    `Setup transaction successful: https://sepolia.etherscan.io/tx/${txHash}`
+  );
+
   return txHash;
 }
