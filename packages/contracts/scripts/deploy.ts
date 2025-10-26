@@ -2,19 +2,17 @@ import { network } from "hardhat";
 
 async function main() {
   const { viem } = await network.connect({
-    network: "hedera"
+    network: "sepolia"
   });
 
   const [deployer] = await viem.getWalletClients();
   
-  console.log("Deploying PortfolioFoundry with the account:", deployer.account.address);
+  console.log("Deploying BasketFoundry with the account:", deployer.account.address);
 
-  // Deploy PortfolioFoundry with the deployer as the owner
-  const portfolioFoundry = await viem.deployContract("PortfolioFoundry", [
-    deployer.account.address
-  ]);
+  // Deploy BasketFoundry
+  const basketFoundry = await viem.deployContract("BasketFoundry");
 
-  console.log("PortfolioFoundry deployed at:", portfolioFoundry.address);
+  console.log("BasketFoundry deployed at:", basketFoundry.address);
 }
 
 main().catch(console.error);
