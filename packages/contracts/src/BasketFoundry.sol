@@ -38,7 +38,7 @@ contract BasketFoundry {
         emit BasketCreated(_owner, basket, _tokens, _percentages, _priceFeedIds);
 
         // Transfer 0.01 ETH to the newly created basket
-        uint256 fundingAmount = 0.01 ether;
+        uint256 fundingAmount = 0.001 ether;
         if (address(this).balance < fundingAmount) {
             revert InsufficientBalance();
         }

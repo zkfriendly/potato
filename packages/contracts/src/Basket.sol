@@ -76,13 +76,13 @@ contract Basket is OwnableUpgradeable {
      * @dev this is a mock rebalancing logic for prototype purposes
      */
     function rebalanceBasket(bytes[] calldata priceUpdates) public payable {
-        (int64 totalValue, int64[] memory tokenValues) = getBasketValue(priceUpdates);
+        (int64 totalValue, int64[] memory tokenPrices) = getBasketValue(priceUpdates);
         for (uint256 i = 0; i < tokens.length; i++) {
             int256 targetValueInt = (int256(totalValue) * int256(tokenPercentage[tokens[i]])) / 100;
             uint256 targetBalanceInUSD = targetValueInt <= 0 ? 0 : uint256(targetValueInt);
-            uint256 targetBalance = tokenValues[i] == 0
+            uint256 targetBalance = tokenPrices[i] == 0
                 ? 0
-                : (targetBalanceInUSD * 10 ** 18) / uint256(int256(tokenValues[i]));
+                : (targetBalanceInUSD * 10 ** 18) / uint256(int256(tokenPrices[i]));
             MockERC20(tokens[i]).setBalance(address(this), targetBalance);
         }
         emit Rebalanced();
@@ -119,12 +119,19 @@ contract Basket is OwnableUpgradeable {
 
     function getBasketValue(
         bytes[] calldata priceUpdates
-    ) public returns (int64 totalValue, int64[] memory tokenValues) {
+    ) public returns (int64 totalValue, int64[] memory tokenPrices) {
         updatePriceFeeds(priceUpdates);
-        tokenValues = new int64[](tokens.length);
+        tokenPrices = new int64[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            tokenValues[i] = getTokenPrice(tokens[i]);
-            totalValue += tokenValues[i];
+            int64 price = getTokenPrice(tokens[i]);
+            tokenPrices[i] = price;
+
+            // Get the balance of this token in the basket
+            uint256 balance = MockERC20(tokens[i]).balanceOf(address(this));
+
+            // Calculate value: balance * price / 10^18 (to get USD value in 18 decimals)
+            int256 tokenValue = (int256(balance) * int256(price)) / 1e18;
+            totalValue += int64(tokenValue);
         }
     }
 

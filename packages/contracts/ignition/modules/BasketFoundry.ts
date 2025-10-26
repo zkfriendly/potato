@@ -1,14 +1,15 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+import BasketImplementationModule from "./BasketImplementation";
 
 export default buildModule("BasketFoundryModule", (m) => {
   const deployer = m.getAccount(0);
 
-  // Basket implementation address
-  const basketImplementation = m.getParameter("basketImplementation", "0x6841214e8c675AA444932dE6cBde2D30A9BB88e5");
+  // Use the deployed BasketImplementation from the module
+  const { basketImplementation } = m.useModule(BasketImplementationModule);
 
   const basketFoundry = m.contract("BasketFoundry", [basketImplementation], {
     from: deployer,
   });
 
-  return { basketFoundry };
+  return { basketFoundry, basketImplementation };
 });

@@ -187,15 +187,15 @@ export default function Profile({ onLogout }: ProfileProps) {
     try {
       setRebalancing(basketAddress);
       console.log("🔄 Starting rebalance for basket:", basketAddress);
-      
+
       const txHash = await rebalanceBasket(basketAddress);
-      
+
       // Log transaction details
       const etherscanLink = `https://sepolia.etherscan.io/tx/${txHash}`;
       console.log("✅ Rebalance transaction submitted!");
       console.log("📝 Tx Hash:", txHash);
       console.log("🔗 Etherscan:", etherscanLink);
-      
+
       // Open Etherscan in new tab
       window.open(etherscanLink, "_blank");
 
